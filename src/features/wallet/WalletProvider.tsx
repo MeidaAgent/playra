@@ -125,7 +125,7 @@ export const config = createConfig({
   multiInjectedProviderDiscovery: true,
   connectors: [
     metaMaskConnector,
-    sequenceConnector,
+    ...(CONFIG.SEQUENCE_ACCESS_KEY ? [sequenceConnector] : []),
     walletConnectConnector,
     coinbaseConnector,
     fallbackConnector,

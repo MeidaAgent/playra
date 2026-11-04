@@ -1,0 +1,18 @@
+{
+  "redirects": [
+    { "source": "/about", "destination": "/docs/", "permanent": true },
+    { "source": "/about/", "destination": "/docs/", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/docs", "destination": "/website/docs/index.html" },
+    { "source": "/docs/", "destination": "/website/docs/index.html" },
+    { "source": "/whitepaper", "destination": "/website/whitepaper/index.html" },
+    { "source": "/whitepaper/", "destination": "/website/whitepaper/index.html" },
+    { "source": "/roadmap", "destination": "/website/roadmap/index.html" },
+    { "source": "/roadmap/", "destination": "/website/roadmap/index.html" },
+    { "source": "/terms-of-service", "destination": "/website/terms-of-service/index.html" },
+    { "source": "/terms-of-service/", "destination": "/website/terms-of-service/index.html" },
+    { "source": "/privacy-policy", "destination": "/website/privacy-policy/index.html" },
+    { "source": "/privacy-policy/", "destination": "/website/privacy-policy/index.html" }
+  ]
+}

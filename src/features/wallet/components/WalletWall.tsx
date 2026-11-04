@@ -291,7 +291,9 @@ export const WalletWall: React.FC<{
                   onConnect(connector);
                 }}
               />
+            {CONFIG.SEQUENCE_ACCESS_KEY && (
               <SequenceButton onConnect={onConnect} />
+            )}
               <OtherWalletsButton
                 onClick={() => setPage("home")}
                 title={t("walletWall.showLess")}
@@ -351,7 +353,9 @@ export const WalletWall: React.FC<{
                 onConnect(connector);
               }}
             />
-            <SequenceButton onConnect={onConnect} />
+              {CONFIG.SEQUENCE_ACCESS_KEY && (
+                <SequenceButton onConnect={onConnect} />
+              )}
           </>
         )}
 

@@ -238,7 +238,7 @@ export default defineConfig(({ command, mode }) => {
     css: {
       modules: {},
     },
-    base: "./",
+    base: process.env.VERCEL ? "/" : "./",
     build: {
       chunkSizeWarningLimit: 1000,
       assetsDir: "assets",
