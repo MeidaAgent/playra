@@ -51,7 +51,6 @@ import { ChapterRaffles } from "./chapterRaffles/ChapterRaffles";
 import { ChapterCropWeekLeaderboard } from "./chapterCropWeek/ChapterCropWeekLeaderboard";
 import { DesignShowcaseContent } from "features/social/DesignShowcase";
 import { FreeTrial } from "./FreeTrial";
-import { Yakkamon } from "./yakkamon/Yakkamon";
 import { GiveawayBoard } from "features/giveaway/ui/GiveawayBoard";
 import { useNavigate } from "react-router";
 
@@ -162,8 +161,7 @@ type InteractableName =
   | "chapter_crop_week_leaderboard"
   | "design_showcase"
   | "giveaway_board"
-  | "free_trial"
-  | "yakkamon";
+  | "free_trial";
 
 class InteractableModalManager {
   private listener?: (name: InteractableName, isOpen: boolean) => void;
@@ -278,9 +276,6 @@ export const InteractableModals: React.FC<Props> = ({ id, scene }) => {
       </Modal>
       <Modal show={interactable === "rarecrows"} onHide={closeModal}>
         <Rarecrows onClose={closeModal} />
-      </Modal>
-      <Modal show={interactable === "yakkamon"} onHide={closeModal}>
-        <Yakkamon onClose={closeModal} />
       </Modal>
       <Modal show={interactable === "desert_noticeboard"} onHide={closeModal}>
         <DesertNoticeboard onClose={closeModal} />

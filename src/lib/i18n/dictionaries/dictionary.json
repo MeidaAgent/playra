@@ -1956,6 +1956,7 @@
   "linkedAccounts.role.futureOwner": "Future Owner",
   "linkedAccounts.role.signIn": "Sign-in",
   "linkedAccounts.rationale.walletLinked": "Holds your farm account - losing this wallet means losing the farm.",
+  "linkedAccounts.walletUnavailableBeta": "Wallet connections are not available during the beta.",
   "linkedAccounts.rationale.walletNotLinked": "Will hold your on-chain farm account once registered.",
   "linkedAccounts.rationale.google": "Convenient sign-in only. Cannot recover a minted Farm on its own.",
   "linkedAccounts.signInCancelled": "Sign-in cancelled",

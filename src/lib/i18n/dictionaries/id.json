@@ -7253,6 +7253,7 @@
   "linkedAccounts.role.futureOwner": "Pemilik Masa Depan",
   "linkedAccounts.role.signIn": "Masuk",
   "linkedAccounts.rationale.walletLinked": "Menahan Rare Item pertanian Anda - kehilangan dompet ini berarti kehilangan pertanian.",
+  "linkedAccounts.walletUnavailableBeta": "Koneksi wallet belum tersedia selama masa beta.",
   "linkedAccounts.rationale.walletNotLinked": "Akan menyimpan Rare Item pertanian Anda setelah dicetak.",
   "linkedAccounts.rationale.google": "Hanya masuk yang nyaman. Tidak dapat memulihkan Pertanian yang dicetak sendiri.",
   "linkedAccounts.signInCancelled": "Masuk dibatalkan",

@@ -18,18 +18,6 @@ import type { InventoryItemName } from "features/game/types/game";
 import { getObjectEntries } from "lib/object";
 import { useSound } from "lib/utils/hooks/useSound";
 import clipboard from "clipboard";
-import {
-  FacebookIcon,
-  FacebookShareButton,
-  RedditIcon,
-  RedditShareButton,
-  TelegramIcon,
-  TelegramShareButton,
-  TwitterShareButton,
-  WhatsappIcon,
-  WhatsappShareButton,
-  XIcon,
-} from "react-share";
 import { getReferrees } from "./actions/getReferrees";
 import { VipReferralRewards } from "./VipReferralRewards";
 import useSWR from "swr";
@@ -39,7 +27,6 @@ import { SomethingWentWrong } from "features/auth/components/SomethingWentWrong"
 import classNames from "classnames";
 import { getRelativeTime } from "lib/utils/time";
 import { useNow } from "lib/utils/hooks/useNow";
-import { onboardingAnalytics } from "lib/onboardingAnalytics";
 import { playerModalManager } from "features/social/lib/playerModalManager";
 
 interface ReferralProps {
@@ -192,19 +179,6 @@ export const ReferralInfo: React.FC = () => {
   const referralLink = `${gameLink}/?ref=${referralCode}`;
   const copypaste = useSound("copypaste");
 
-  const shareMessage = t("referral.share.message");
-
-  const onShareClick = (
-    method: "Reddit" | "Twitter" | "Telegram" | "Facebook" | "Whatsapp",
-  ) => {
-    // https://developers.google.com/analytics/devguides/collection/ga4/reference/events?sjid=18434190870996612736-AP&client_type=gtag#share
-    onboardingAnalytics.logEvent("share", {
-      method,
-      content_type: "text",
-      item_id: "referral_link",
-    });
-  };
-
   return (
     <div className="p-2 text-xs flex flex-col gap-2 overflow-y-auto scrollable max-h-[500px]">
       <div className="w-full relative">
@@ -243,46 +217,6 @@ export const ReferralInfo: React.FC = () => {
         />
       </div>
 
-      {/* Social share buttons */}
-      <div className="flex items-center gap-1 flex-wrap">
-        <p>{`${t("referral.share")} `}</p>
-        <TwitterShareButton
-          url={referralLink}
-          title={shareMessage}
-          hashtags={["SunflowerLand"]}
-          onClick={() => onShareClick("Twitter")}
-        >
-          <XIcon size={32} round />
-        </TwitterShareButton>
-        <WhatsappShareButton
-          url={referralLink}
-          title={shareMessage}
-          onClick={() => onShareClick("Whatsapp")}
-        >
-          <WhatsappIcon size={32} round />
-        </WhatsappShareButton>
-        <TelegramShareButton
-          url={referralLink}
-          title={shareMessage}
-          onClick={() => onShareClick("Telegram")}
-        >
-          <TelegramIcon size={32} round />
-        </TelegramShareButton>
-        <FacebookShareButton
-          url={referralLink}
-          hashtag="#SunflowerLand"
-          onClick={() => onShareClick("Facebook")}
-        >
-          <FacebookIcon size={32} round />
-        </FacebookShareButton>
-        <RedditShareButton
-          url={referralLink}
-          title={shareMessage}
-          onClick={() => onShareClick("Reddit")}
-        >
-          <RedditIcon size={32} round />
-        </RedditShareButton>
-      </div>
       {/* Referral Package */}
       <div className="flex flex-col gap-2">
         <Label type="default">{t("referral.package")}</Label>

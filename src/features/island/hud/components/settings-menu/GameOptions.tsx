@@ -131,11 +131,6 @@ const GameOptions: React.FC<ContentComponentProps> = ({ onSubMenuClick }) => {
       onClick: () => onSubMenuClick("account"),
     },
     {
-      id: "advanced",
-      content: <span>{t("gameOptions.advanced")}</span>,
-      onClick: () => onSubMenuClick("advanced"),
-    },
-    {
       id: "about",
       content: <span>{t("gameOptions.about")}</span>,
       onClick: () => onSubMenuClick("about"),
