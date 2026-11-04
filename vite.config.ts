@@ -4,7 +4,6 @@ import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { minifyHtml, injectHtml } from "vite-plugin-html";
 import { VitePWA } from "vite-plugin-pwa";
-import preload from "vite-plugin-preload";
 import mkcert from "vite-plugin-mkcert";
 
 const getPortFromCLI = () => {
@@ -137,7 +136,7 @@ export default defineConfig(({ command, mode }) => {
             }
           : undefined,
       ),
-      ...(isProduction ? [preload(), minifyHtml()] : []),
+      ...(isProduction ? [minifyHtml()] : []),
       tsconfigPaths(),
       injectHtml({
         // TODO with API environment variables

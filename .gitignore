@@ -56,3 +56,5 @@ cache
 /docs/superpowers/
 /AGENTS.md
 .env.portal
+.vercel
+.env.local
