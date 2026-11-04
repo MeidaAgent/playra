@@ -316,6 +316,14 @@ export const Plot: React.FC<Props> = ({ id }) => {
         setShowSeasonalSeed(true);
       }
 
+      const currentGame = gameService.getSnapshot().context.state;
+      if (
+        currentGame.crops[id]?.crop ||
+        !currentGame.inventory[seed]?.gte(1)
+      ) {
+        return;
+      }
+
       const newState = gameService.send("seed.planted", {
         index: id,
         item: seed,
