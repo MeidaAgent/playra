@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Playra Roadmap</title>
+  <meta name="description" content="Official Playra development roadmap." />
+  <link rel="icon" href="/assets/plank_logo.png" />
+  <style>
+    @font-face { font-family: m5x7; src: url("/website/css/m5x7.ttf"); }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: Arial, sans-serif;
+      color: #fff;
+      background: #0799dc url("/assets/ocean.png") repeat;
+      overflow-x: hidden;
+    }
+    .nav {
+      height: 88px; display: flex; align-items: center; justify-content: space-between;
+      padding: env(safe-area-inset-top) 5vw 0;
+      position: relative; z-index: 10;
+      overflow: visible;
+      background: #fff;
+    }
+    .nav::after {
+      content: none;
+    }
+    .brand, .links { position: relative; z-index: 2; }
+    .brand { display: flex; align-items: center; gap: 10px; color: #176b9a; text-decoration: none; font-family: m5x7; font-size: 34px; }
+    .brand img { width: 48px; height: 48px; object-fit: contain; image-rendering: pixelated; }
+    .links { display: flex; align-items: center; gap: clamp(16px, 3vw, 32px); }
+    .links a { color: #176b9a; text-decoration: none; font-family: m5x7; font-size: 24px; }
+    .links a:hover { color: #ffe45c; }
+    .hero {
+      min-height: 190px; display: grid; place-items: center; text-align: center;
+      position: relative; overflow: hidden;
+      padding: 20px 20px 36px;
+    }
+    .hero > div { position: relative; z-index: 1; }
+    h1 { margin: 0; font-family: m5x7; font-size: clamp(54px, 8vw, 82px); line-height: 0.8; text-shadow: 3px 5px #176b9a; }
+    .hero p { max-width: 680px; margin: 18px auto 0; font-size: 15px; line-height: 1.6; text-shadow: 1px 2px #176b9a; }
+    .roadmap { max-width: 980px; margin: 42px auto 80px; padding: 0 20px; }
+    .timeline { position: relative; }
+    .timeline::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 6px; transform: translateX(-50%); background: rgba(255,255,255,.35); border-radius: 8px; box-shadow: 0 0 0 2px rgba(23,107,154,.35); }
+    .timeline::after {
+      content: ""; position: absolute; left: 50%; top: 0; width: 6px; height: var(--roadmap-progress, 0px);
+      transform: translateX(-50%); border-radius: 8px;
+      background: linear-gradient(180deg, #ffe45c 0%, #ffd34a 100%);
+      box-shadow: 0 0 10px rgba(255,228,92,.85), 0 0 0 2px rgba(23,107,154,.35);
+      transition: height 360ms ease-out;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .timeline::before { z-index: 0; }
+    .phase { width: calc(50% - 32px); margin-bottom: 28px; position: relative; }
+    .phase:nth-child(odd) { margin-right: 50%; }
+    .phase:nth-child(even) { margin-left: calc(50% + 32px); }
+    .phase::after { content: ""; position: absolute; top: 28px; width: 18px; height: 18px; border-radius: 50%; background: #ffe45c; border: 4px solid #176b9a; box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+    .phase:nth-child(odd)::after { right: -41px; }
+    .phase:nth-child(even)::after { left: -41px; }
+    .phase::after {
+      transition: transform 280ms ease-out, box-shadow 280ms ease-out, background 280ms ease-out;
+      z-index: 3;
+    }
+    .phase.is-active::after {
+      background: #ffe45c;
+      transform: scale(1.16);
+      box-shadow: 0 0 0 4px rgba(255,228,92,.32), 0 0 16px rgba(255,228,92,.95);
+    }
+    .phase.is-reached .card { border-color: #ffe45c; }
+    @keyframes roadmap-pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(255,228,92,.32), 0 0 16px rgba(255,228,92,.95); }
+      50% { box-shadow: 0 0 0 9px rgba(255,228,92,.08), 0 0 24px rgba(255,228,92,1); }
+    }
+    .phase.is-active::after { animation: roadmap-pulse 1.6s ease-in-out infinite; }
+    .card {
+      min-height: 150px; border: 3px solid #176b9a; border-radius: 14px;
+      background: rgba(255,248,231,.97); color: #3e2731; padding: 18px 20px;
+      box-shadow: 0 7px 0 rgba(23,107,154,.28);
+    }
+    .status { display: inline-block; padding: 6px 9px 4px; border-radius: 999px; font-family: m5x7; font-size: 16px; color: white; background: #7c6bb1; }
+    .status.live { background: #15967a; }
+    .status.beta { background: #d68a1e; }
+    .card h2 { margin: 12px 0 8px; font-family: m5x7; font-size: 30px; line-height: 1; }
+    .card p, .card li { font-size: 14px; line-height: 1.55; }
+    .card ul { margin: 6px 0 0; padding-left: 18px; }
+    @media (max-width: 680px) {
+      .nav { height: 72px; padding-top: env(safe-area-inset-top); padding-inline: 16px; }
+      .brand { font-size: 28px; }
+      .brand img { width: 40px; height: 40px; }
+      .links a:not(:first-child) { display: none; }
+      .hero { min-height: 170px; padding-bottom: 30px; }
+      .roadmap { margin-top: 28px; padding-inline: 14px; }
+      .timeline::before, .timeline::after { left: 13px; }
+      .phase, .phase:nth-child(odd), .phase:nth-child(even) { width: calc(100% - 36px); margin-left: 36px; margin-right: 0; }
+      .phase::after, .phase:nth-child(odd)::after, .phase:nth-child(even)::after { left: -32px; right: auto; }
+      .card { min-height: 0; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="/"><img src="/assets/token.png" alt="" /><span>PLAYRA</span></a>
+    <div class="links"><a href="/">Home</a><a href="/docs/">Docs</a><a href="/waitlist/">Waitlist</a></div>
+  </nav>
+  <header class="hero">
+    <div><h1>ROADMAP</h1><p>A clear view of Playra’s progress, current priorities, and plans for the future. Timelines may evolve as development continues.</p></div>
+  </header>
+  <main class="roadmap">
+    <div class="timeline">
+      <section class="phase"><div class="card"><span class="status live">LIVE</span><h2>Website &amp; Pioneer Access</h2><ul><li>The public website is available at playra.io.</li><li>The waitlist registration page is available.</li><li>The homepage and registration experience are implemented and responsive.</li><li>Waitlist availability should be verified separately from production account storage.</li></ul></div></section>
+      <section class="phase"><div class="card"><span class="status live">LIVE</span><h2>Core Game Systems</h2><ul><li>The game codebase includes farming, crops, buildings, crafting, animals, and fishing interfaces.</li><li>Inventory, production timers, quests, and progression systems are implemented in code.</li><li>These systems are not presented as guaranteed market-ready features until server testing confirms them.</li></ul></div></section>
+      <section class="phase"><div class="card"><span class="status live">LIVE</span><h2>Beta Testing</h2><ul><li>The closed beta is used to test gameplay, accounts, server stability, and progression.</li><li>Pioneer feedback helps identify bugs, balance issues, and account or inventory problems.</li><li>Testing is reported through verified Playra channels before wider access is granted.</li><li>Beta participation does not guarantee a token, reward, or public release date.</li></ul></div></section>
+      <section class="phase"><div class="card"><span class="status beta">IN TESTING</span><h2>Trading &amp; Marketplace</h2><ul><li>Marketplace and trading interfaces require stability and validation.</li><li>Legacy blockchain, withdrawal, deposit, and token behavior are disabled under the Playra environment guard.</li><li>Listing, pricing, anti-fraud, and transaction safeguards must pass testing before broader use.</li><li>Do not treat the interface as an active external asset marketplace yet.</li></ul></div></section>
+      <section class="phase"><div class="card"><span class="status beta">IN TESTING</span><h2>Game Economy</h2><ul><li>Balance resource production, crafting costs, and progression rewards.</li><li>Review supply, inflation, repeatable activities, and long-term account behavior.</li><li>Separate gameplay balances from any future external economy.</li><li>Open economy features gradually only after measured stabilization.</li></ul></div></section>
+      <section class="phase" data-current="true"><div class="card"><span class="status beta">IN TESTING</span><h2>Public Game Release</h2><ul><li>The Play page uses the Playra game build and account/server integration.</li><li>Public availability depends on current server configuration and account services.</li><li>No open-access launch promise is made until stable end-to-end play is verified.</li><li>Environment checks still require production-server validation.</li></ul></div></section>
+      <section class="phase"><div class="card"><span class="status">FUTURE CONSIDERATION</span><h2>PYRA Economy</h2><ul><li>No PYRA contract, network, token launch, sale, or trading venue is confirmed.</li><li>PYRA has no active earning, withdrawal, staking, or reward pool.</li><li>Any future announcement will be made only through verified Playra channels.</li><li>Unofficial contracts, airdrops, presales, and investment offers must be considered unverified.</li></ul></div></section>
+      <section class="phase"><div class="card"><span class="status">PLANNED</span><h2>Social Play &amp; Community Events</h2><ul><li>Multiplayer visits, cooperative activities, and gifting remain planned scope.</li><li>Event format and participation rules will be confirmed before launch.</li><li>Community features are developed only as stable server infrastructure permits.</li></ul></div></section>
+      <section class="phase"><div class="card"><span class="status">PLANNED</span><h2>Android &amp; iOS Experience</h2><ul><li>Continue responsive browser support for common mobile devices.</li><li>Native Android and iOS applications are planned only if browser support is stable.</li><li>Cloud progress, account recovery, and notifications require final implementation.</li></ul></div></section>
+      <section class="phase"><div class="card"><span class="status">FUTURE</span><h2>World Expansion &amp; Partnerships</h2><ul><li>Additional islands, environments, and content require an established release pipeline.</li><li>Creator and platform partnerships will be announced only with verified scope and terms.</li><li>Partnership and roadmap additions will not be presumed from current development work.</li></ul></div></section>
+    </div>
+  </main>
+  <script>
+    (() => {
+      const timeline = document.querySelector(".timeline");
+      const phases = [...document.querySelectorAll(".phase")];
+      const current = document.querySelector(".phase[data-current='true']");
+      const currentIndex = phases.indexOf(current);
+
+      phases.forEach((phase, index) => {
+        phase.classList.toggle("is-reached", index <= currentIndex);
+        phase.classList.toggle("is-active", index === currentIndex);
+      });
+
+      const updateProgress = () => {
+        const target = current.offsetTop + 37;
+        const start = 0;
+        const duration = 900;
+        const startedAt = performance.now();
+
+        const animate = (now) => {
+          const elapsed = Math.min(1, (now - startedAt) / duration);
+          const eased = 1 - Math.pow(1 - elapsed, 3);
+          timeline.style.setProperty("--roadmap-progress", `${target * eased}px`);
+          if (elapsed < 1) window.requestAnimationFrame(animate);
+        };
+
+        timeline.style.setProperty("--roadmap-progress", `${start}px`);
+        window.requestAnimationFrame(animate);
+      };
+
+      window.addEventListener("load", updateProgress);
+      window.addEventListener("resize", updateProgress);
+      updateProgress();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+import Decimal from "decimal.js-light";
+import type { CropMachineQueueItem, GameState } from "features/game/types/game";
+import { produce } from "immer";
+import {
+  getOilTimeInMillis,
+  convertLegacyCropMachine,
+  MAX_OIL_CAPACITY_IN_MILLIS,
+  updateCropMachine,
+} from "./supplyCropMachine";
+import { hasFeatureAccess } from "lib/flags";
+import { getCropMachineBoostWindows } from "features/game/lib/boostWindows";
+import { settleCropMachine } from "features/game/lib/cropMachineReadiness";
+
+/**
+ * LEGACY MACHINES ONLY: reconstructs the tank from the per-pack earmarks the
+ * legacy allocator embedded in readyAt/growsUntil, in pure 1× wall-clock
+ * arithmetic. On a windowed machine (`oilSettledAt` set) there are no earmarks
+ * and wall clock ≠ work — after `settleCropMachine` the tank simply IS
+ * `unallocatedOilTime` (or `getCropMachineFuelAt` for a live reading).
+ */
+export function getTotalOilMillisInMachine(
+  queue: CropMachineQueueItem[],
+  unallocatedOilTime: number,
+  now: number,
+) {
+  const oil = queue.reduce((totalOil, item) => {
+    // There is no oil to allocated to this pack
+    if (!item.startTime) return totalOil;
+
+    // Completely allocated pack has started growing but has not reached the readyAt time
+    // therefore it is currently using its allocation of oil
+    // add the unused oil to the total oil
+    if (item.readyAt && item.startTime <= now && item.readyAt > now) {
+      return totalOil + item.readyAt - now;
+    }
+
+    // Completely allocated pack hasn't started growing yet. Add the entire allocation to the total oil
+    if (item.readyAt && item.startTime > now) {
+      return totalOil + item.readyAt - item.startTime;
+    }
+
+    // Partially allocated pack hasn't started growing yet. Add the entire allocation to the total oil.
+    if (item.growsUntil && item.startTime > now) {
+      return totalOil + item.growsUntil - item.startTime;
+    }
+
+    // Partially allocated pack has started growing and is currently growing but has not reached the growsUntil time
+    // therefore it is currently using its oil allocation
+    // add the unused oil to the total oil
+    if (item.growsUntil && item.startTime <= now && item.growsUntil > now) {
+      return totalOil + item.growsUntil - now;
+    }
+
+    return totalOil;
+  }, unallocatedOilTime ?? 0);
+
+  return Math.max(oil, 0);
+}
+
+export type SupplyCropMachineOilAction = {
+  type: "cropMachine.oilSupplied";
+  oil: number;
+  machineId: string;
+};
+
+type SupplyCropMachineOilOptions = {
+  state: Readonly<GameState>;
+  action: SupplyCropMachineOilAction;
+  createdAt?: number;
+};
+
+export function supplyCropMachineOil({
+  state,
+  action,
+  createdAt = Date.now(),
+}: SupplyCropMachineOilOptions): GameState {
+  const oilAdded = action.oil;
+
+  if (oilAdded <= 0) {
+    throw new Error("Invalid amount supplied");
+  }
+
+  return produce(state, (stateCopy) => {
+    if (!stateCopy.buildings["Crop Machine"]) {
+      throw new Error("Crop Machine does not exist");
+    }
+
+    const cropMachine = stateCopy.buildings["Crop Machine"].find(
+      (m) => m.id === action.machineId,
+    );
+
+    if (!cropMachine || !cropMachine.coordinates) {
+      throw new Error("Crop Machine not found");
+    }
+
+    const previousOilInInventory = stateCopy.inventory["Oil"] ?? new Decimal(0);
+
+    if (previousOilInInventory.lt(oilAdded)) {
+      throw new Error("Missing requirements");
+    }
+
+    const windowed =
+      cropMachine.oilSettledAt !== undefined ||
+      hasFeatureAccess(stateCopy, "SPEED_BOOSTS");
+
+    if (windowed) {
+      const windows = getCropMachineBoostWindows(stateCopy);
+      convertLegacyCropMachine({
+        machine: cropMachine,
+        state: stateCopy,
+        windows,
+        now: createdAt,
+      });
+      // After settling, the tank level IS unallocatedOilTime (no earmarks).
+      settleCropMachine({ machine: cropMachine, windows, now: createdAt });
+
+      if (
+        (cropMachine.unallocatedOilTime ?? 0) +
+          getOilTimeInMillis(oilAdded, state) >
+        MAX_OIL_CAPACITY_IN_MILLIS(state)
+      ) {
+        throw new Error("Oil capacity exceeded");
+      }
+
+      stateCopy.inventory["Oil"] = previousOilInInventory.minus(oilAdded);
+
+      cropMachine.unallocatedOilTime =
+        (cropMachine.unallocatedOilTime ?? 0) +
+        getOilTimeInMillis(oilAdded, state);
+
+      // Same instant, so this settle only refreshes the caches with the new
+      // fuel taken into account (a stalled pack resumes from here).
+      settleCropMachine({ machine: cropMachine, windows, now: createdAt });
+
+      return stateCopy;
+    }
+
+    const { queue = [], unallocatedOilTime = 0 } = cropMachine;
+
+    const oilMillisInMachine = getTotalOilMillisInMachine(
+      queue,
+      unallocatedOilTime,
+      createdAt,
+    );
+
+    if (
+      oilMillisInMachine + getOilTimeInMillis(oilAdded, state) >
+      MAX_OIL_CAPACITY_IN_MILLIS(state)
+    ) {
+      throw new Error("Oil capacity exceeded");
+    }
+
+    stateCopy.inventory["Oil"] = previousOilInInventory.minus(oilAdded);
+
+    cropMachine.unallocatedOilTime =
+      (cropMachine.unallocatedOilTime ?? 0) +
+      getOilTimeInMillis(oilAdded, state);
+
+    const updatedCropMachine = updateCropMachine({
+      now: createdAt,
+      cropMachine,
+    });
+
+    stateCopy.buildings["Crop Machine"] = stateCopy.buildings[
+      "Crop Machine"
+    ].map((machine) =>
+      machine.id === cropMachine.id ? updatedCropMachine : machine,
+    );
+
+    return stateCopy;
+  });
+}

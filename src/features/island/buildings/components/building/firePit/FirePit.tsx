@@ -1,0 +1,223 @@
+import { v4 as uuidv4 } from "uuid";
+import {
+  hasCollectedFirstTart,
+  needsFirstCook,
+  TUTORIAL_RECIPE,
+} from "./lib/onboarding";
+import { ModalContext } from "features/game/components/modal/ModalProvider";
+import React, { useContext, useState } from "react";
+
+import classNames from "classnames";
+import { FirePitModal } from "./FirePitModal";
+import { type CookableName, COOKABLES } from "features/game/types/consumables";
+import { ITEM_DETAILS } from "features/game/types/images";
+import { PIXEL_SCALE } from "features/game/lib/constants";
+import { BuildingImageWrapper } from "../BuildingImageWrapper";
+import { setImageWidth } from "lib/images";
+import { Context } from "features/game/GameProvider";
+import { useSelector } from "@xstate/react";
+import { gameAnalytics } from "lib/gameAnalytics";
+
+import { SUNNYSIDE } from "assets/sunnyside";
+import { FIRE_PIT_VARIANTS } from "features/island/lib/alternateArt";
+import shadow from "assets/npcs/shadow.png";
+import type { MachineState } from "features/game/lib/gameMachine";
+import { getTutorialNudge } from "features/island/lib/tutorialNudge";
+import { useSound } from "lib/utils/hooks/useSound";
+import { ReadyRecipes } from "../ReadyRecipes";
+import { useCookingState } from "features/island/buildings/lib/useCookingState";
+import type { GameState, TemperateSeasonName } from "features/game/types/game";
+import { getCurrentBiome } from "features/island/biomes/biomes";
+
+type Props = {
+  buildingId: string;
+  isBuilt: boolean;
+  island: GameState["island"];
+  season: TemperateSeasonName;
+};
+
+const _rhubarbTartCooked = (state: MachineState) =>
+  state.context.state.farmActivity["Rhubarb Tart Cooked"] ?? 0;
+const _needsFirstCook = (state: MachineState) =>
+  needsFirstCook(state.context.state);
+const _activeNudge = (state: MachineState) =>
+  getTutorialNudge(state.context.state);
+const _season = (state: MachineState) => state.context.state.season.season;
+const _firePit = (id: string) => (state: MachineState) =>
+  state.context.state.buildings["Fire Pit"]?.find((b) => b.id === id);
+
+export const FirePit: React.FC<Props> = ({ buildingId, isBuilt, island }) => {
+  const { gameService } = useContext(Context);
+  const { openModal } = useContext(ModalContext);
+  const [showModal, setShowModal] = useState(false);
+
+  const rhubarbTartCooked = useSelector(gameService, _rhubarbTartCooked);
+  const isFirstCook = useSelector(gameService, _needsFirstCook);
+  const activeNudge = useSelector(gameService, _activeNudge);
+  const season = useSelector(gameService, _season);
+  const firePit = useSelector(gameService, _firePit(buildingId));
+
+  const { cooking, queuedRecipes, readyRecipes } = useCookingState(
+    firePit ?? {},
+  );
+
+  const itemInProgress =
+    cooking?.name && cooking.name in COOKABLES
+      ? (cooking.name as CookableName)
+      : undefined;
+
+  const { play: bakeryAudio } = useSound("bakery");
+
+  const handleCook = (item: CookableName) => {
+    gameService?.send({
+      type: "recipe.cooked",
+      item,
+      buildingId,
+      // Client-generated so the local reducer and the server agree on the id when
+      // the event is replayed — cancel/speed-up address the recipe by it.
+      recipeId: uuidv4().slice(0, 8),
+    });
+
+    if (item === "Rhubarb Tart" && !rhubarbTartCooked) {
+      gameAnalytics.trackMilestone({
+        event: "Tutorial:Cooked:Completed",
+      });
+    }
+
+    // Tutorial: the first tart is on the fire, so Bruce mentions the shortcut.
+    // A tip, not an instruction - waiting out the minute is just as good.
+    if (item === TUTORIAL_RECIPE && isFirstCook) {
+      openModal("FIREPIT_SPEEDUP");
+    }
+  };
+
+  const handleCollect = () => {
+    const before = gameService.getSnapshot().context.state;
+
+    const after = gameService?.send({
+      type: "recipes.collected",
+      building: "Fire Pit",
+      buildingId,
+    });
+
+    // Tutorial: first tart in hand, Bruce tells the player to eat it.
+    if (hasCollectedFirstTart(before, after.context.state)) {
+      openModal("FIREPIT_EAT");
+    }
+  };
+
+  const handleClick = () => {
+    if (!isBuilt) return;
+
+    if (!cooking && readyRecipes.length > 0) {
+      handleCollect();
+    } else {
+      bakeryAudio();
+      setShowModal(true);
+    }
+  };
+
+  // One nudge at a time across the whole farm - see getTutorialNudge
+  const showHelper = activeNudge === "firepit-cook" && !cooking;
+
+  return (
+    <>
+      <BuildingImageWrapper
+        name="Fire Pit"
+        onClick={handleClick}
+        ready={readyRecipes?.length > 0}
+      >
+        <img
+          src={FIRE_PIT_VARIANTS[getCurrentBiome(island)][season]}
+          className={classNames("absolute bottom-0 pointer-events-none", {
+            "opacity-100": !cooking,
+            "opacity-80": cooking,
+          })}
+          style={{
+            width: `${PIXEL_SCALE * 47}px`,
+            height: `${PIXEL_SCALE * 33}px`,
+          }}
+        />
+        {cooking && (
+          <img
+            src={ITEM_DETAILS[cooking.name].image}
+            className={classNames("absolute z-30 pointer-events-none")}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (
+                !img ||
+                !img.complete ||
+                !img.naturalWidth ||
+                !img.naturalHeight
+              ) {
+                return;
+              }
+
+              const left = Math.floor(24 - img.naturalWidth / 2);
+              img.style.left = `${PIXEL_SCALE * left}px`;
+              setImageWidth(img);
+            }}
+            style={{
+              opacity: 0,
+              bottom: `${PIXEL_SCALE * 6}px`,
+            }}
+          />
+        )}
+        <ReadyRecipes readyRecipes={readyRecipes} leftOffset={10} />
+        <img
+          src={shadow}
+          className="absolute pointer-events-none"
+          style={{
+            width: `${PIXEL_SCALE * 15}px`,
+            top: `${PIXEL_SCALE * 14}px`,
+            left: `${PIXEL_SCALE * 11}px`,
+          }}
+        />
+        {showHelper && (
+          <img
+            className="absolute cursor-pointer group-hover:img-highlight z-30 animate-pulsate"
+            src={SUNNYSIDE.icons.click_icon}
+            style={{
+              width: `${PIXEL_SCALE * 18}px`,
+              right: `${PIXEL_SCALE * -8}px`,
+              top: `${PIXEL_SCALE * 20}px`,
+            }}
+          />
+        )}
+
+        {cooking ? (
+          <img
+            src={SUNNYSIDE.npcs.firePit_npcDoing}
+            className="absolute pointer-events-none"
+            style={{
+              width: `${PIXEL_SCALE * 16}px`,
+              top: `${PIXEL_SCALE * 2}px`,
+              left: `${PIXEL_SCALE * 13}px`,
+            }}
+          />
+        ) : (
+          <img
+            src={SUNNYSIDE.npcs.firePit_npc}
+            className="absolute pointer-events-none"
+            style={{
+              width: `${PIXEL_SCALE * 14}px`,
+              top: `${PIXEL_SCALE * 2}px`,
+              left: `${PIXEL_SCALE * 11}px`,
+            }}
+          />
+        )}
+      </BuildingImageWrapper>
+
+      <FirePitModal
+        queue={queuedRecipes ?? []}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onCook={handleCook}
+        cooking={cooking}
+        itemInProgress={itemInProgress}
+        buildingId={buildingId}
+        readyRecipes={readyRecipes}
+      />
+    </>
+  );
+};

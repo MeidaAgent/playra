@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
+  <g transform="translate(14, 10)">
+    <!-- Main Robinhood Feather Silhouette -->
+    <path d="M48 2 C37 6 26 14 20 25 C16 33 15 41 16 50 C17 56 19 62 22 68 C12 63 6 54 3 44 C1 38 1 31 2 24 C3 19 4 14 6 10 C3 14 1 19 0 24 C-1 36 3 49 11 58 C19 67 30 73 42 74 C45 74 49 74 52 73 C53 71 54 68 55 66 C57 63 60 61 63 60 C66 60 69 60 71 61 C68 56 67 53 67 48 C67 43 69 38 72 34 C74 31 77 28 80 26 C70 25 60 22 52 17 C46 13 41 7 40 1 L48 2 Z" fill="#00C805"/>
+    <path d="M43 28 C41 30 40 33 40 36 C40 41 43 45 47 47 C43 52 41 57 41 63 C41 70 44 76 49 81 C44 83 39 84 34 84 C28 84 23 82 18 78 C21 74 22 69 21 64 C20 58 17 52 12 48 C18 45 22 40 24 34 C25 30 25 27 24 23 L28 26 C33 29 38 31 43 28 Z" fill="#00C805" opacity="0.95"/>
+  </g>
+  <text x="82" y="53" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="800" fill="#111827" letter-spacing="-0.8px">robinhood</text>
+</svg>

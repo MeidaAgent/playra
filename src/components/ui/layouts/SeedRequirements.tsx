@@ -1,0 +1,516 @@
+import Decimal from "decimal.js-light";
+import { INVENTORY_LIMIT } from "features/game/lib/constants";
+import {
+  getAscensionLevel,
+  type LevelRequirement,
+} from "features/game/lib/level";
+import type {
+  BoostName,
+  GameState,
+  InventoryItemName,
+  TemperateSeasonName,
+} from "features/game/types/game";
+import {
+  ITEM_DETAILS,
+  getTranslatedItemName,
+} from "features/game/types/images";
+import React, { type JSX } from "react";
+import { Label } from "../Label";
+import { RequirementLabel } from "../RequirementsLabel";
+import { SquareIcon } from "../SquareIcon";
+import { formatDateRange, secondsToString } from "lib/utils/time";
+import { SUNNYSIDE } from "assets/sunnyside";
+import classNames from "classnames";
+import {
+  getPreActionDisplay,
+  isPreActionBoosted,
+} from "features/game/lib/timerDisplay";
+import { getCropMachineBoostWindows } from "features/game/lib/boostWindows";
+import {
+  getBoostContributionEntries,
+  getCropMachineBoostContributions,
+} from "features/game/lib/boostContributions";
+import emptyPot from "assets/greenhouse/greenhouse_pot.webp";
+import flowerBed from "assets/flowers/empty_flowerbed.webp";
+
+import { useAppTranslation } from "lib/i18n/useAppTranslations";
+import { ITEM_ICONS } from "features/island/hud/components/inventory/Chest";
+import { type Seed, type SeedName, SEEDS } from "features/game/types/seeds";
+import {
+  type CropName,
+  type CropSeedName,
+  getCropCategory,
+  type ProduceName,
+} from "features/game/types/crops";
+import { getCurrentBiome } from "features/island/biomes/biomes";
+import { BoostsDisplay } from "./BoostsDisplay";
+import {
+  calculateCropTime,
+  CROP_MACHINE_PLOTS,
+} from "features/game/events/landExpansion/supplyCropMachine";
+import { useActiveBuff } from "features/game/types/buffs";
+import { useNow } from "lib/utils/hooks/useNow";
+import { hasFeatureAccess } from "lib/flags";
+
+/**
+ * The props for the details for items.
+ * @param type The type is item.
+ * @param item The item.
+ * @param quantity The item quantity. Leave it undefined if quantity is not displayed.
+ */
+type BaseProps = {
+  quantity?: Decimal;
+  from?: Date;
+  to?: Date;
+  item?: InventoryItemName;
+};
+type InventoryDetailsProps = BaseProps & {
+  item: SeedName;
+};
+type ItemDetailsProps = InventoryDetailsProps & {
+  seasons?: TemperateSeasonName[];
+  cropMachineSeeds?: SeedName[];
+};
+
+/**
+ * The props for harvests requirement label.
+ * @param minHarvest The minimum number of harvests.
+ * @param maxHarvest The maximum number of harvests.
+ */
+interface HarvestsRequirementProps {
+  minHarvest: number;
+  maxHarvest: number;
+}
+
+/**
+ * The props for the crafting requirements.
+ * @param resources The item resources requirements.
+ * @param coins The Coins requirements.
+ * @param showCoinsIfFree Whether to show free Coins requirement if cost is 0. Defaults to false.
+ * @param sfl The FLOWER requirements.
+ * @param showSflIfFree Whether to show free FLOWER requirement if FLOWER cost is 0. Defaults to false.
+ * @param harvests The min/max harvests for the item.
+ * @param xp The XP gained for consuming the item.
+ * @param timeSeconds The wait time in seconds for crafting the item.
+ * @param level The level requirements.
+ */
+interface RequirementsProps {
+  coins?: number;
+  showCoinsIfFree?: boolean;
+  harvests?: HarvestsRequirementProps;
+  time?: { seconds: number; boostsUsed: { name: BoostName; value: string }[] };
+  baseTimeSeconds?: number;
+  level?: LevelRequirement;
+  restriction?: {
+    icon: string;
+    text: string;
+    isLocked?: boolean;
+  };
+}
+
+/**
+ * The props for the component.
+ * @param gameState The game state.
+ * @param stock The stock of the item available to craft.  Undefined if the stock is unlimited.
+ * @param isLimitedItem true if the item quantity is limited to a certain number in the blockchain, else false. Defaults to false.
+ * @param details The item details.
+ * @param boost The available boost of the item.
+ * @param requirements The item quantity requirement.
+ * @param actionView The view for displaying the crafting action.
+ * @param label Information label for the item.
+ */
+interface Props {
+  gameState: GameState;
+  stock?: Decimal;
+  isLimitedItem?: boolean;
+  details: ItemDetailsProps;
+  requirements?: RequirementsProps;
+  limit?: number;
+  actionView?: JSX.Element;
+  label?: JSX.Element;
+  validSeeds: SeedName[];
+  setShowBoosts: (show: boolean) => void;
+  showBoosts: boolean;
+}
+
+function getDetails(
+  game: GameState,
+  details: ItemDetailsProps,
+): {
+  limit: Decimal;
+  count: Decimal;
+  image: string;
+  name: string;
+  description: string;
+} {
+  const inventoryCount = game.inventory[details.item] ?? new Decimal(0);
+  const limit = INVENTORY_LIMIT(game)[details.item];
+
+  return {
+    count: inventoryCount,
+    description: ITEM_DETAILS[details.item].description,
+    image:
+      ITEM_ICONS(game.season.season, getCurrentBiome(game.island))[
+        details.item
+      ] ?? ITEM_DETAILS[details.item].image,
+    name: getTranslatedItemName(details.item),
+    limit: limit as Decimal,
+  };
+}
+
+const PLANTING_SPOT_ICONS: Partial<Record<Seed["plantingSpot"], string>> = {
+  "Crop Plot": SUNNYSIDE.resource.plot,
+  "Flower Bed": flowerBed,
+  "Fruit Patch": SUNNYSIDE.resource.fruitPatch,
+  Greenhouse: emptyPot,
+};
+
+/**
+ * The view for displaying item name, details, crafting requirements and action.
+ * @props The component props.
+ */
+export const SeedRequirements: React.FC<Props> = ({
+  gameState,
+  stock,
+  isLimitedItem = false,
+  limit,
+  details,
+  requirements,
+  actionView,
+  label,
+  validSeeds,
+  setShowBoosts,
+  showBoosts,
+}) => {
+  const { t } = useAppTranslation();
+  const isSeedCropMachine = (seed: SeedName): seed is CropSeedName =>
+    !!details.cropMachineSeeds?.includes(seed);
+
+  const isCropMachineSeed = isSeedCropMachine(details.item);
+
+  // Tick live when a countdown is shown (Chapter Crop Week seed), and for a
+  // crop-machine seed, whose grow time depends on a temporary boost (Tortoise
+  // Shrine) that can expire while the panel is open — that clock must not stop
+  // at the countdown's end. Otherwise the whole panel (incl. boosts) needlessly
+  // re-renders every second.
+  const now = useNow({
+    live: !!details.from || isCropMachineSeed,
+    autoEndAt: isCropMachineSeed ? undefined : details.to?.getTime(),
+  });
+  const { isActive: isPowerHourActive, remainingTime: powerHourRemainingTime } =
+    useActiveBuff({
+      buff: "Power hour",
+      game: gameState,
+    });
+
+  const getStock = () => {
+    if (!stock) return <></>;
+
+    if (stock.lessThanOrEqualTo(0)) {
+      return (
+        <div className="flex justify-center mt-0 sm:mb-1">
+          <Label type="danger">{t("statements.soldOut")}</Label>
+        </div>
+      );
+    }
+
+    const { count, limit } = getDetails(gameState, details);
+
+    const isInventoryFull =
+      limit === undefined ? false : count.greaterThanOrEqualTo(limit);
+
+    return (
+      <div className="flex justify-center mt-0 sm:mb-1">
+        <Label type={isInventoryFull ? "danger" : "info"}>
+          {isLimitedItem
+            ? t("stock.left", { stock: stock })
+            : t("stock.inStock", { stock: stock })}
+        </Label>
+      </div>
+    );
+  };
+
+  const inSeasonSeeds = validSeeds.includes(details.item);
+
+  const getItemDetail = () => {
+    const { image: icon, name } = getDetails(gameState, details);
+    const title = details.quantity
+      ? `${details.quantity} x ${details.item}`
+      : name;
+
+    return (
+      <>
+        <div className="flex flex-col space-x-2 justify-start items-center md:space-x-0 mb-1">
+          <div>
+            <p className="text-center">{title}</p>
+            <p className="text-xs text-center">
+              {t(getCropCategory(SEEDS[details.item]?.yield as ProduceName))}
+            </p>
+          </div>
+          {icon && !!details.item && (
+            <div className="mt-2 flex items-center">
+              <SquareIcon icon={icon} width={14} />
+              <SquareIcon icon={SUNNYSIDE.icons.chevron_right} width={8} />
+              <SquareIcon
+                icon={
+                  isCropMachineSeed
+                    ? SUNNYSIDE.building.cropMachine
+                    : (PLANTING_SPOT_ICONS[SEEDS[details.item].plantingSpot] ??
+                      SUNNYSIDE.icons.expression_confused)
+                }
+                width={14}
+              />
+              <SquareIcon icon={SUNNYSIDE.icons.chevron_right} width={8} />
+              <SquareIcon
+                icon={
+                  ITEM_DETAILS[SEEDS[details.item]?.yield as CropName]?.image ??
+                  SUNNYSIDE.icons.expression_confused
+                }
+                width={14}
+              />
+            </div>
+          )}
+          {!inSeasonSeeds && (
+            <p className="text-xxs mt-1">{t("cropGuide.cantPlantSeeds")}</p>
+          )}
+          {isCropMachineSeed && (
+            <p className="text-xxs mt-1">{t("cropGuide.onlyInCropMachine")}</p>
+          )}
+        </div>
+      </>
+    );
+  };
+
+  const getRequirements = () => {
+    if (!requirements) return <></>;
+    const { coins, showCoinsIfFree, harvests, time, baseTimeSeconds, level } =
+      requirements;
+
+    // Named boosts are already folded into `time.seconds` and can be itemised; a
+    // live speed window shows as a shorter projected time but has no name to
+    // list, so it must not make the block clickable on its own.
+    const hasNamedBoosts = (time?.boostsUsed.length ?? 0) > 0;
+    const isTimeBoosted =
+      !!time &&
+      isPreActionBoosted({
+        displaySeconds: time.seconds,
+        baseSeconds: baseTimeSeconds,
+        hasNamedBoosts,
+      });
+
+    // A plain render helper, not a nested component: a component declared here
+    // is a new type every render, so each `now` tick would remount the subtree
+    // and replay the boosts panel's appear transition (it flashes every second).
+    const getRequirementLabels = () => {
+      if (isSeedCropMachine(details.item)) {
+        const cropMachinePackSize = CROP_MACHINE_PLOTS(gameState);
+
+        // A pack supplied now WILL be windowed under SPEED_BOOSTS — the supply
+        // event converts the machine — so this pre-action preview gates on the
+        // FLAG (there is no pack yet to carry a marker). The Tortoise is then a
+        // live window rather than a baked ×0.9, so it must come out of the
+        // duration here and be credited over the grow instead.
+        const isCropMachineWindowed = hasFeatureAccess(
+          gameState,
+          "SPEED_BOOSTS",
+        );
+        const cropMachineTime = calculateCropTime(
+          { type: details.item, amount: cropMachinePackSize },
+          gameState,
+          now,
+          { windowed: isCropMachineWindowed },
+        );
+        const cropMachineSeconds = cropMachineTime.milliSeconds / 1000;
+        const cropMachineBaseTime = baseTimeSeconds;
+
+        // Name the windowed Tortoise by the time it actually saves ("-1hr
+        // 12mins Tortoise Shrine"), matching every other windowed boost in the
+        // seed shop, instead of the legacy "x0.9" multiplier.
+        const cropMachineBoostsUsed = [
+          ...cropMachineTime.boostUsed,
+          ...getBoostContributionEntries({
+            contributions: getCropMachineBoostContributions(gameState),
+            seconds: cropMachineSeconds,
+            at: now,
+            formatSeconds: (seconds) =>
+              secondsToString(seconds, { length: "medium" }),
+          }),
+        ];
+
+        const {
+          displaySeconds: cropMachineDisplaySeconds,
+          hasNamedBoosts: cropMachineHasNamedBoosts,
+          isBoosted: isCropMachineTimeBoosted,
+        } = getPreActionDisplay({
+          seconds: cropMachineSeconds,
+          baseSeconds: cropMachineBaseTime,
+          namedBoostCount: cropMachineBoostsUsed.length,
+          windows: isCropMachineWindowed
+            ? getCropMachineBoostWindows(gameState)
+            : [],
+          at: now,
+        });
+
+        return (
+          <div
+            className={classNames("flex flex-col items-center", {
+              "cursor-pointer": cropMachineHasNamedBoosts,
+            })}
+            onClick={
+              cropMachineHasNamedBoosts
+                ? () => setShowBoosts(!showBoosts)
+                : undefined
+            }
+          >
+            <p className="text-xxs">{`Time to grow ${cropMachinePackSize}x: `}</p>
+            {isCropMachineTimeBoosted && (
+              <RequirementLabel
+                type="time"
+                waitSeconds={cropMachineDisplaySeconds}
+                boosted
+              />
+            )}
+            {!!cropMachineBaseTime && (
+              <RequirementLabel
+                type="time"
+                waitSeconds={cropMachineBaseTime}
+                strikethrough={isCropMachineTimeBoosted}
+              />
+            )}
+            <BoostsDisplay
+              boosts={cropMachineBoostsUsed}
+              show={showBoosts}
+              state={gameState}
+              onClick={() => setShowBoosts(!showBoosts)}
+            />
+          </div>
+        );
+      }
+
+      return (
+        <div
+          className={classNames("flex flex-col items-center", {
+            "cursor-pointer": hasNamedBoosts,
+          })}
+          onClick={
+            hasNamedBoosts ? () => setShowBoosts(!showBoosts) : undefined
+          }
+        >
+          {!!time && isTimeBoosted && (
+            <RequirementLabel type="time" waitSeconds={time.seconds} boosted />
+          )}
+          {!!baseTimeSeconds && (
+            <RequirementLabel
+              type="time"
+              waitSeconds={baseTimeSeconds}
+              strikethrough={isTimeBoosted}
+            />
+          )}
+          <BoostsDisplay
+            boosts={time?.boostsUsed ?? []}
+            show={hasNamedBoosts && showBoosts}
+            state={gameState}
+            onClick={() => setShowBoosts(!showBoosts)}
+          />
+        </div>
+      );
+    };
+
+    return (
+      <div className="w-full mb-2 flex justify-center gap-x-3 gap-y-0 flex-wrap sm:flex-col sm:items-center sm:flex-nowrap my-1">
+        {/* Time requirement display */}
+        {getRequirementLabels()}
+        {/* Level requirement */}
+        {!!level && (
+          <RequirementLabel
+            type="level"
+            currentLevel={getAscensionLevel({
+              experience: gameState.bumpkin.experience ?? 0,
+              ascensionLevel: gameState.island.ascensionLevel ?? 0,
+            })}
+            requirement={level}
+          />
+        )}
+
+        {!gameState.inventory[SEEDS[details.item].plantingSpot] && (
+          <div className="flex justify-center">
+            <Label className="mb-1" type="danger">
+              {t("seeds.plantingSpot.needed", {
+                plantingSpot: SEEDS[details.item].plantingSpot,
+              })}
+            </Label>
+          </div>
+        )}
+
+        {/* Harvests display */}
+        {!!harvests && (
+          <RequirementLabel
+            type="harvests"
+            minHarvest={harvests.minHarvest}
+            maxHarvest={harvests.maxHarvest}
+          />
+        )}
+
+        {/* Coin requirement */}
+        {coins !== undefined && (coins > 0 || showCoinsIfFree) && (
+          <RequirementLabel
+            type="coins"
+            balance={gameState.coins}
+            requirement={coins}
+          />
+        )}
+
+        {label}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col h-full justify-between">
+      <div className="flex flex-col h-full px-1 py-0">
+        {getStock()}
+        {details.from && (
+          <div className="flex flex-col items-center gap-1 my-1">
+            <Label
+              icon={SUNNYSIDE.icons.stopwatch}
+              type="vibrant"
+              className="mx-auto whitespace-nowrap"
+            >
+              {formatDateRange(details.from, details.to as Date)}
+            </Label>
+            {details.to &&
+              details.to.getTime() > now &&
+              details.from.getTime() <= now && (
+                <Label
+                  icon={SUNNYSIDE.icons.stopwatch}
+                  type="transparent"
+                  className="mx-auto whitespace-nowrap"
+                >
+                  {`${secondsToString((details.to.getTime() - now) / 1000, {
+                    length: "short",
+                  })} ${t("time.left")}`}
+                </Label>
+              )}
+          </div>
+        )}
+        {getItemDetail()}
+        {limit && (
+          <p className="my-1 text-xs text-left sm:text-center">{`${t(
+            "max",
+          )} ${limit} ${t("statements.perplayer")}`}</p>
+        )}
+        {getRequirements()}
+        {isPowerHourActive && (
+          <div className="flex flex-col items-center mb-2">
+            <Label type="vibrant" icon={SUNNYSIDE.icons.lightning}>
+              {`Power hour - ${secondsToString(powerHourRemainingTime / 1000, {
+                length: "medium",
+              })}`}
+            </Label>
+          </div>
+        )}
+      </div>
+      {actionView}
+    </div>
+  );
+};

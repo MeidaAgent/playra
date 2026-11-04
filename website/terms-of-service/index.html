@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Terms of Service | Playra</title>
+    <meta
+      name="description"
+      content="Official Playra Terms of Service covering account access, fair play, digital content, and gameplay rules."
+    />
+        <link rel="icon" type="image/png" href="/tab_icon.png?v=6" />
+    <link rel="shortcut icon" href="/favicon.ico?v=6" />
+    <link rel="apple-touch-icon" href="/tab_icon.png?v=6" />
+
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Custom Dark Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+      }
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: #334155 #0f172a;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-body: #111418;
+        --bg-header: rgba(17, 20, 24, 0.95);
+        --bg-card: #181c22;
+        --bg-active: #202632;
+        --border-color: #212732;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --accent-blue: #3b82f6;
+        --accent-yellow: #f59e0b;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg-body);
+        color: var(--text-primary);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 15px;
+        line-height: 1.72;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Header */
+      .nav-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        height: 64px;
+        background: var(--bg-header);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+      }
+
+      .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: var(--text-primary);
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .nav-logo {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .nav-link {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: color 0.15s ease;
+      }
+
+      .nav-link:hover {
+        color: var(--text-primary);
+      }
+
+      .btn-play {
+        background: #2563eb;
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 13.5px;
+        font-weight: 600;
+        padding: 6px 16px;
+        border-radius: 6px;
+        transition: background 0.15s ease;
+      }
+
+      .btn-play:hover {
+        background: #1d4ed8;
+      }
+      @media (max-width: 860px) {
+        html, body { overflow-x: hidden; }
+        .top-nav { height: 58px; }
+        .nav-links { gap: 10px; }
+        .nav-link:nth-child(n+3) { display: none; }
+        .btn-play { white-space: nowrap; padding: 6px 10px; }
+      }
+
+      /* Container */
+      .policy-container {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 48px 24px 100px;
+      }
+
+      .policy-breadcrumb {
+        font-size: 13px;
+        color: var(--accent-blue);
+        margin-bottom: 12px;
+        font-weight: 500;
+      }
+
+      h1 {
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+      }
+
+      .last-updated {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 32px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 16px;
+      }
+
+      h2 {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 36px 0 14px 0;
+        color: var(--text-primary);
+      }
+
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 24px 0 10px 0;
+        color: #e2e8f0;
+      }
+
+      p {
+        color: var(--text-secondary);
+        margin-bottom: 18px;
+        font-size: 15px;
+      }
+
+      ul, ol {
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+        padding-left: 24px;
+      }
+
+      li {
+        margin-bottom: 8px;
+      }
+
+      .policy-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px 24px;
+        margin: 24px 0;
+      }
+
+      .policy-card p {
+        margin: 0;
+      }
+
+      .policy-alert {
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin: 24px 0;
+        color: #fed7aa;
+        font-size: 14px;
+      }
+
+      a {
+        color: var(--accent-blue);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="nav-header">
+      <a href="/" class="nav-brand">
+        <img src="/assets/token.png" alt="Playra Logo" class="nav-logo" />
+        <span>Playra</span>
+      </a>
+      <nav class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/whitepaper/" class="nav-link">Whitepaper</a>
+        <a href="/docs/" class="nav-link">Docs</a>
+        <a href="/privacy-policy/" class="nav-link">Privacy</a>
+        <a href="/waitlist/" class="btn-play">Join Waitlist</a>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="policy-container">
+      <div class="policy-breadcrumb">Support > Terms of Service</div>
+      <h1>Terms of Service</h1>
+      <div class="last-updated">Last Updated: October 2026 • Playra Ecosystem</div>
+
+      <div class="policy-alert">
+        <strong>Important Notice:</strong> PYRA and any blockchain features are not currently confirmed for launch. These Terms govern the Playra game and website. No content promises a token, allocation, digital-asset return, trading availability, or investment outcome.
+      </div>
+
+      <div class="policy-card">
+        <p>
+          Welcome to Playra! These Terms of Service (<strong>"Terms"</strong>) govern your access to and use of the website, game client, smart contracts, and associated applications (collectively, the <strong>"Platform"</strong>) provided by Playra.
+        </p>
+      </div>
+
+      <h2>1. Acceptance of Terms</h2>
+      <p>
+        By accessing or using the Platform or creating a farm account, you agree to be bound by these Terms. If you do not agree, you must not access or use the Platform.
+      </p>
+
+      <h2>2. Eligibility</h2>
+      <p>
+        You must be at least 18 years of age or the age of legal majority in your jurisdiction to use the Platform. By using the Platform, you represent and warrant that you meet these eligibility requirements.
+      </p>
+
+      <h2>3. Prohibited Conduct & Fair Play Policy</h2>
+      <p>
+        Playra is committed to maintaining a healthy and authentic gaming economy. The following behaviors constitute a violation of our Fair Play Policy and may result in immediate account suspension, asset freezing, or permanent banishment:
+      </p>
+      <ul>
+        <li><strong>Botting & Automation:</strong> Using scripts, bots, macro software, or automated tools to simulate user clicks, harvests, trades, or fishing actions;</li>
+        <li><strong>Sybil & Multi-Accounting:</strong> Creating or managing dozens of automated farm accounts to funnel referral rewards or siphon daily reward pools;</li>
+        <li><strong>Exploitation of Bugs:</strong> Knowingly exploiting smart contract vulnerabilities or gameplay glitches instead of reporting them to developers;</li>
+        <li><strong>Market Manipulation:</strong> Collusive wash-trading, spoofing prices, or artificially manipulating token liquidity pools.</li>
+      </ul>
+
+      <h2>4. Digital Assets & Ownership</h2>
+      <p>
+        Items and currencies displayed in the game are currently gameplay content governed by Playra's economy rules unless Playra separately announces a verifiable external-asset system. We may modify, replace, or discontinue game content, balances, and account features where reasonably required for game operation, security, or economy stability. Any future digital asset will be subject to additional documentation at launch.
+      </p>
+
+      <h2>5. No Financial or Investment Advice</h2>
+      <p>
+        All content provided on the Platform is for informational and entertainment purposes only. References to PYRA or other future digital assets do not constitute an offer, investment contract, security, allocation, or promise of financial return.
+      </p>
+
+      <h2>6. Limitation of Liability</h2>
+      <p>
+        To the maximum extent permitted by law, Playra and its contributors shall not be liable for any indirect, incidental, consequential, or punitive damages, including loss of profits, digital assets, or data, arising out of your access to or use of the Platform or third-party blockchain services.
+      </p>
+
+      <h2>7. Amendments & Updates</h2>
+      <p>
+        We reserve the right to modify these Terms at any time. Any changes will be posted on this page with an updated revision date. Your continued use of the Platform after changes are posted constitutes your acceptance of the revised Terms.
+      </p>
+
+      <h2>8. Contact & Community</h2>
+      <p>
+        For inquiries regarding these Terms or our community guidelines, please contact us through our official X account:
+      </p>
+      <ul>
+        <li><strong>Support Desk:</strong> <a href="https://x.com/PlayraFarm" target="_blank">Playra on X</a></li>
+        <li><strong>Official X:</strong> <a href="https://x.com/PlayraFarm" target="_blank">Playra Official</a></li>
+      </ul>
+    </main>
+  </body>
+</html>

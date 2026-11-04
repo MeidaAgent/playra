@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 130" width="340" height="130">
+  <defs>
+    <filter id="plank-shadow" x="-5%" y="-5%" width="110%" height="118%">
+      <feDropShadow dx="0" dy="6" stdDeviation="0" flood-color="#0c0704" />
+    </filter>
+  </defs>
+  
+  <!-- Main Wooden Board Group -->
+  <g filter="url(#plank-shadow)">
+    <!-- Outer Dark Pixel Border -->
+    <rect x="6" y="6" width="328" height="114" rx="6" fill="#3b1d0c" stroke="#1f0f06" stroke-width="4" />
+    
+    <!-- Outer Wood Rim -->
+    <rect x="12" y="12" width="316" height="102" rx="4" fill="#6d3919" />
+    
+    <!-- Main Plank Surface -->
+    <rect x="16" y="16" width="308" height="94" rx="3" fill="#a46331" />
+    
+    <!-- Horizontal Plank Grooves -->
+    <line x1="16" y1="48" x2="324" y2="48" stroke="#4a2610" stroke-width="3" />
+    <line x1="16" y1="78" x2="324" y2="78" stroke="#4a2610" stroke-width="3" />
+    
+    <!-- Wood Grain Highlight Strips -->
+    <line x1="18" y1="20" x2="322" y2="20" stroke="#cf8b4e" stroke-width="3" />
+    <line x1="18" y1="52" x2="322" y2="52" stroke="#cf8b4e" stroke-width="2" />
+    <line x1="18" y1="82" x2="322" y2="82" stroke="#cf8b4e" stroke-width="2" />
+
+    <!-- Corner Metal Nails with highlights -->
+    <!-- Top Left -->
+    <rect x="22" y="22" width="7" height="7" fill="#1f0f06" />
+    <rect x="24" y="24" width="3" height="3" fill="#a1a1aa" />
+    <!-- Top Right -->
+    <rect x="311" y="22" width="7" height="7" fill="#1f0f06" />
+    <rect x="313" y="24" width="3" height="3" fill="#a1a1aa" />
+    <!-- Bottom Left -->
+    <rect x="22" y="97" width="7" height="7" fill="#1f0f06" />
+    <rect x="24" y="99" width="3" height="3" fill="#a1a1aa" />
+    <!-- Bottom Right -->
+    <rect x="311" y="97" width="7" height="7" fill="#1f0f06" />
+    <rect x="313" y="99" width="3" height="3" fill="#a1a1aa" />
+
+    <!-- Side Candy Badges -->
+    <!-- Left Candy -->
+    <g transform="translate(26, 48)">
+      <circle cx="16" cy="14" r="13" fill="#ec4899" stroke="#831843" stroke-width="2.5" />
+      <path d="M7 14 Q16 6 25 14 Q16 22 7 14" fill="#fdf2f8" opacity="0.8" />
+      <polygon points="3,8 3,20 10,14" fill="#ec4899" stroke="#831843" stroke-width="2" />
+      <polygon points="29,8 29,20 22,14" fill="#ec4899" stroke="#831843" stroke-width="2" />
+    </g>
+
+    <!-- Right Lollipop -->
+    <g transform="translate(282, 46)">
+      <line x1="15" y1="20" x2="15" y2="36" stroke="#fde047" stroke-width="3" stroke-linecap="round" />
+      <circle cx="15" cy="14" r="13" fill="#3b82f6" stroke="#1e3a8a" stroke-width="2.5" />
+      <circle cx="15" cy="14" r="8" fill="#60a5fa" />
+      <circle cx="15" cy="14" r="3" fill="#eff6ff" />
+    </g>
+
+    <!-- Main Title: CANDY LAND -->
+    <!-- CANDY -->
+    <text x="170" y="54" 
+          font-family="'Upheaval', 'm5x7', Impact, monospace, sans-serif" 
+          font-size="40" 
+          font-weight="900" 
+          fill="#fef08a" 
+          stroke="#1f0f06" 
+          stroke-width="7" 
+          paint-order="stroke fill" 
+          text-anchor="middle" 
+          letter-spacing="4">CANDY</text>
+          
+    <text x="170" y="54" 
+          font-family="'Upheaval', 'm5x7', Impact, monospace, sans-serif" 
+          font-size="40" 
+          font-weight="900" 
+          fill="#fef08a" 
+          text-anchor="middle" 
+          letter-spacing="4">CANDY</text>
+
+    <!-- LAND -->
+    <text x="170" y="96" 
+          font-family="'Upheaval', 'm5x7', Impact, monospace, sans-serif" 
+          font-size="36" 
+          font-weight="900" 
+          fill="#ffffff" 
+          stroke="#1f0f06" 
+          stroke-width="7" 
+          paint-order="stroke fill" 
+          text-anchor="middle" 
+          letter-spacing="5">LAND</text>
+
+    <text x="170" y="96" 
+          font-family="'Upheaval', 'm5x7', Impact, monospace, sans-serif" 
+          font-size="36" 
+          font-weight="900" 
+          fill="#ffffff" 
+          text-anchor="middle" 
+          letter-spacing="5">LAND</text>
+  </g>
+</svg>

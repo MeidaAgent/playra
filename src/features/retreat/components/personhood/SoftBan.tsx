@@ -1,0 +1,179 @@
+import clipboard from "clipboard";
+import { SUNNYSIDE } from "assets/sunnyside";
+import { Button } from "components/ui/Button";
+import { Label } from "components/ui/Label";
+import { Telegram } from "features/auth/components/Telegram/Telegram";
+import { useGame } from "features/game/GameProvider";
+import React, { useState } from "react";
+import { CONFIG } from "lib/config";
+import { FaceRecognition } from "./FaceRecognition";
+import { useAppTranslation } from "lib/i18n/useAppTranslations";
+import { useSound } from "lib/utils/hooks/useSound";
+import { useNow } from "lib/utils/hooks/useNow";
+import { SoftBanSocialUnlink } from "./SoftBanSocialUnlink";
+
+export const SoftBan: React.FC = () => {
+  const { gameService, gameState } = useGame();
+
+  const [showTelegram, setShowTelegram] = useState(false);
+  const [showFaceRecognition, setShowFaceRecognition] = useState(false);
+  // Verification may need a Discord / Telegram account that is still
+  // linked elsewhere, and Settings is unreachable from here.
+  const [showUnlink, setShowUnlink] = useState(false);
+
+  const [showFarm, setShowFarm] = useState(false);
+
+  const copypaste = useSound("copypaste");
+
+  const { t } = useAppTranslation();
+
+  const now = useNow();
+
+  const hasVerifiedSocial = gameState.context.state.ban.isSocialVerified;
+
+
+  if (showTelegram) {
+    return <TelegramSoftBan onClose={() => setShowTelegram(false)} />;
+  }
+
+  const handleContactSupport = () => {
+    window.open(
+      "https://x.com/PlayraFarm",
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  if (!hasVerifiedSocial) {
+    return (
+      <div className="p-1">
+        <div className="flex justify-between flex-wrap items-center">
+          <Label icon={SUNNYSIDE.icons.search} type="default" className="mb-1">
+            {t("softBan.goblinDetection")}
+          </Label>
+          <Label
+            type="default"
+            popup={showFarm}
+            className="mb-1"
+            onClick={() => {
+              setShowFarm(true);
+              setTimeout(() => {
+                setShowFarm(false);
+              }, 2000);
+              copypaste.play();
+              clipboard.copy(
+                gameService.getSnapshot()?.context?.farmId.toString() as string,
+              );
+            }}
+          >
+            {t("gameOptions.farmId", {
+              farmId: gameService.getSnapshot()?.context?.farmId,
+            })}
+          </Label>
+        </div>
+        <p className="text-xs mb-2">{t("softBan.networkWarning")}</p>
+        <Label type="default" className="mb-1">
+          {t("softBan.step1")}
+        </Label>
+        <p className="text-xs mb-2">{t("softBan.socialVerification")}</p>
+        <Button onClick={() => setShowTelegram(true)}>
+          {t("softBan.telegramVerification")}
+        </Button>
+        <p
+          className="underline cursor-pointer text-xs my-1"
+          onClick={handleContactSupport}
+        >
+          {t("welcome.needHelp")}
+        </p>
+        <UnlinkSocialLink onClick={() => setShowUnlink(true)} />
+        <SoftBanSocialUnlink
+          show={showUnlink}
+          onClose={() => setShowUnlink(false)}
+        />
+      </div>
+    );
+  }
+
+  const { faceRecognition } = gameState.context.state;
+
+  // Since we are not in playing state, we use this to check if they have already begun.
+  const hasBegun = faceRecognition?.session?.createdAt ?? 0;
+  const hasScanned = faceRecognition?.history.some(
+    (h) => h.createdAt > now - 60 * 1000,
+  );
+
+  if (showFaceRecognition || hasBegun >= now - 60 * 1000 || hasScanned) {
+    return <FaceRecognition skipIntro />;
+  }
+
+  return (
+    <div className="p-1">
+      <Label icon={SUNNYSIDE.icons.search} type="default" className="mb-1">
+        {t("softBan.goblinDetection")}
+      </Label>
+      <p className="text-xs mb-2">{t("softBan.networkWarning")}</p>
+      <Label type="default" className="mb-1">
+        {t("softBan.step2")}
+      </Label>
+      <p className="text-xs mb-2">{t("softBan.faceVerification")}</p>
+      <Button onClick={() => setShowFaceRecognition(true)}>
+        {t("softBan.faceProtection")}
+      </Button>
+      <UnlinkSocialLink onClick={() => setShowUnlink(true)} />
+      <SoftBanSocialUnlink
+        show={showUnlink}
+        onClose={() => setShowUnlink(false)}
+      />
+    </div>
+  );
+};
+
+const UnlinkSocialLink: React.FC<{ onClick: () => void }> = ({ onClick }) => {
+  const { t } = useAppTranslation();
+
+  return (
+    <p
+      className="underline cursor-pointer text-xxs opacity-75 mt-2 text-right"
+      onClick={onClick}
+    >
+      {t("softBan.unlinkSocial")}
+    </p>
+  );
+};
+
+
+const TelegramSoftBan: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const { gameState } = useGame();
+  const { t } = useAppTranslation();
+
+  const telegramConnected = gameState.context.state.telegram?.startedAt;
+
+  if (!telegramConnected) {
+    return <Telegram onClose={onClose} />;
+  }
+
+  return (
+    <div className="p-1">
+      <Label icon={SUNNYSIDE.icons.search} type="default" className="mb-1">
+        {t("softBan.telegramVerificationTitle")}
+      </Label>
+      <p className="mb-2">{t("softBan.telegramInstructions")}</p>
+      <div className="flex">
+        <Button className="mr-1" onClick={onClose}>
+          {t("softBan.back")}
+        </Button>
+        <Button
+          onClick={() => {
+            // New tab it
+            window.open(
+              `https://t.me/${CONFIG.TELEGRAM_BOT}?start=verify`,
+              "_blank",
+            );
+          }}
+        >
+          {t("softBan.openBot")}
+        </Button>
+      </div>
+    </div>
+  );
+};

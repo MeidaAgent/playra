@@ -1,0 +1,424 @@
+import { INITIAL_BUMPKIN, TEST_FARM } from "features/game/lib/constants";
+import {
+  buyAnimal,
+  getAnimalBuildingCapacity,
+  getBoostedAnimalCapacity,
+  getOverCapacityAnimalIds,
+} from "./buyAnimal";
+import type { Animal } from "features/game/types/game";
+import type { AnimalType } from "features/game/types/animals";
+import { LEVEL_EXPERIENCE } from "features/game/lib/level";
+
+export function makeAnimals(count: number, type: AnimalType) {
+  return new Array(count)
+    .fill(0)
+    .reduce<Record<string, Animal>>((animals, _, index) => {
+      return {
+        ...animals,
+        [String(index)]: {
+          id: index.toString(),
+          type,
+          state: "idle",
+          coordinates: { x: index, y: index },
+          experience: 0,
+          asleepAt: 0,
+          lovedAt: 0,
+          item: "Petting Hand",
+          createdAt: 0,
+          awakeAt: 0,
+        },
+      };
+    }, {});
+}
+
+describe("buyAnimal", () => {
+  const leveledUpBumpkin = { ...INITIAL_BUMPKIN, experience: 300000 };
+
+  it("throws an error if the farm does not have enough coins to buy an animal", () => {
+    expect(() =>
+      buyAnimal({
+        state: {
+          ...TEST_FARM,
+          coins: 0,
+          bumpkin: INITIAL_BUMPKIN,
+          buildings: {
+            "Hen House": [
+              {
+                coordinates: { x: 0, y: 0 },
+                createdAt: 0,
+                id: "123",
+                readyAt: 0,
+              },
+            ],
+          },
+        },
+        action: {
+          id: "0",
+          animal: "Chicken",
+          type: "animal.bought",
+        },
+      }),
+    ).toThrow("Insufficient coins to buy a Chicken");
+  });
+
+  it("throws an error if the player does not have the required building placed", () => {
+    expect(() => {
+      buyAnimal({
+        state: {
+          ...TEST_FARM,
+          coins: 1000,
+          bumpkin: INITIAL_BUMPKIN,
+          buildings: {},
+        },
+        action: {
+          id: "0",
+          animal: "Chicken",
+          type: "animal.bought",
+        },
+      });
+    }).toThrow("You do not have a Hen House");
+  });
+
+  it("throws an error if the bumpkin isn't at the required level", () => {
+    expect(() => {
+      buyAnimal({
+        state: {
+          ...TEST_FARM,
+          coins: 1000,
+          bumpkin: leveledUpBumpkin,
+          buildings: {},
+        },
+        action: {
+          id: "0",
+          animal: "Chicken",
+          type: "animal.bought",
+        },
+      });
+    }).toThrow("You do not have a Hen House");
+  });
+
+  it("throws an error if the player does not have the capacity", () => {
+    expect(() => {
+      buyAnimal({
+        state: {
+          ...TEST_FARM,
+          coins: 1000,
+          bumpkin: leveledUpBumpkin,
+          buildings: {
+            "Hen House": [
+              {
+                coordinates: { x: 0, y: 0 },
+                createdAt: 0,
+                id: "123",
+                readyAt: 0,
+              },
+            ],
+          },
+          collectibles: {},
+          henHouse: {
+            level: 1,
+            animals: makeAnimals(10, "Chicken"),
+          },
+        },
+        action: {
+          id: "0",
+          animal: "Chicken",
+          type: "animal.bought",
+        },
+      });
+    }).toThrow("You do not have the capacity for this animal");
+  });
+
+  it("subtracts the price of the animal (cow) from the farm's coins", () => {
+    const state = buyAnimal({
+      state: {
+        ...TEST_FARM,
+        coins: 1000,
+        bumpkin: leveledUpBumpkin,
+        buildings: {
+          Barn: [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "123",
+              readyAt: 0,
+            },
+          ],
+        },
+        barn: {
+          level: 1,
+          animals: makeAnimals(3, "Cow"),
+        },
+      },
+      action: {
+        id: "0",
+        animal: "Cow",
+        type: "animal.bought",
+      },
+    });
+
+    expect(state.coins).toBe(900);
+  });
+
+  it("adds the animal to the building in an idle state", () => {
+    const state = buyAnimal({
+      state: {
+        ...TEST_FARM,
+        coins: 1000,
+        bumpkin: leveledUpBumpkin,
+        buildings: {
+          Barn: [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "123",
+              readyAt: 0,
+            },
+          ],
+        },
+        barn: {
+          level: 1,
+          animals: makeAnimals(3, "Cow"),
+        },
+      },
+      action: {
+        id: "0",
+        animal: "Cow",
+        type: "animal.bought",
+      },
+    });
+
+    expect(state.barn?.animals).toMatchObject({
+      0: {
+        id: "0",
+        type: "Cow",
+        state: "idle",
+        createdAt: expect.any(Number),
+      },
+    });
+  });
+
+  it("tracks the bumpkin activity", () => {
+    const state = buyAnimal({
+      state: {
+        ...TEST_FARM,
+        coins: 1000,
+        bumpkin: leveledUpBumpkin,
+        buildings: {
+          Barn: [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "123",
+              readyAt: 0,
+            },
+          ],
+        },
+        barn: {
+          level: 1,
+          animals: makeAnimals(3, "Cow"),
+        },
+      },
+      action: {
+        id: "0",
+        animal: "Cow",
+        type: "animal.bought",
+      },
+    });
+
+    expect(state.farmActivity["Cow Bought"]).toBe(1);
+    expect(state.farmActivity["Coins Spent"]).toBe(100);
+  });
+});
+
+describe("getAnimalCapacity", () => {
+  it("returns 10 for level 1 with no coop", () => {
+    expect(
+      getBoostedAnimalCapacity("henHouse", {
+        ...TEST_FARM,
+        collectibles: {},
+      }).capacity,
+    ).toBe(10);
+  });
+
+  it("returns 15 from level 1 with coop", () => {
+    expect(
+      getBoostedAnimalCapacity("henHouse", {
+        ...TEST_FARM,
+        collectibles: {
+          "Chicken Coop": [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "123",
+              readyAt: 0,
+            },
+          ],
+        },
+      }).capacity,
+    ).toBe(15);
+  });
+
+  it("returns 25 from level 2 with coop", () => {
+    expect(
+      getBoostedAnimalCapacity("henHouse", {
+        ...TEST_FARM,
+        henHouse: {
+          ...TEST_FARM.henHouse,
+          level: 2,
+        },
+        collectibles: {
+          "Chicken Coop": [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "123",
+              readyAt: 0,
+            },
+          ],
+        },
+      }).capacity,
+    ).toBe(25);
+  });
+
+  it("returns 20 from level 3 with no coop", () => {
+    expect(
+      getBoostedAnimalCapacity("henHouse", {
+        ...TEST_FARM,
+        henHouse: {
+          ...TEST_FARM.henHouse,
+          level: 3,
+        },
+      }).capacity,
+    ).toBe(20);
+  });
+
+  it("returns 35 from level 3 with coop", () => {
+    expect(
+      getBoostedAnimalCapacity("henHouse", {
+        ...TEST_FARM,
+        henHouse: {
+          ...TEST_FARM.henHouse,
+          level: 3,
+        },
+        collectibles: {
+          "Chicken Coop": [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "123",
+              readyAt: 0,
+            },
+          ],
+        },
+      }).capacity,
+    ).toBe(35);
+  });
+});
+
+describe("buyAnimal: Pig", () => {
+  // The Pig's level lock is the Pigpen's own (Bryn, 2026-10-21).
+  const buyPig = (experience: number) =>
+    buyAnimal({
+      state: {
+        ...TEST_FARM,
+        coins: 1000,
+        bumpkin: { ...INITIAL_BUMPKIN, experience },
+        buildings: {
+          Pigpen: [
+            {
+              coordinates: { x: 0, y: 0 },
+              createdAt: 0,
+              id: "123",
+              readyAt: 0,
+            },
+          ],
+        },
+        pigpen: { level: 1, animals: {} },
+      },
+      action: {
+        id: "0",
+        animal: "Pig",
+        type: "animal.bought",
+      },
+    });
+
+  it("throws below the Pigpen's unlock level of 30", () => {
+    expect(() => buyPig(LEVEL_EXPERIENCE[29])).toThrow(
+      "Your bumpkin is not at the required level of 30",
+    );
+  });
+
+  it("sells a Pig at level 30", () => {
+    const state = buyPig(LEVEL_EXPERIENCE[30]);
+
+    expect(state.pigpen.animals["0"]).toMatchObject({ type: "Pig" });
+  });
+});
+
+describe("getAnimalCapacity: Pigpen", () => {
+  const atLevel = (level: number) =>
+    getBoostedAnimalCapacity("pigpen", {
+      ...TEST_FARM,
+      collectibles: {},
+      pigpen: { level, animals: {} },
+    }).capacity;
+
+  it.each([
+    [1, 3],
+    [2, 6],
+    [3, 9],
+  ])(
+    "returns %i -> %i, its own table rather than the shared formula",
+    (level, expected) => {
+      expect(atLevel(level)).toBe(expected);
+    },
+  );
+
+  it("is not lifted by the Chicken Coop or Barn Blueprint", () => {
+    expect(
+      getBoostedAnimalCapacity("pigpen", {
+        ...TEST_FARM,
+        pigpen: { level: 1, animals: {} },
+        collectibles: {
+          "Chicken Coop": [
+            { coordinates: { x: 0, y: 0 }, createdAt: 0, id: "1", readyAt: 0 },
+          ],
+          "Barn Blueprint": [
+            { coordinates: { x: 2, y: 2 }, createdAt: 0, id: "2", readyAt: 0 },
+          ],
+        },
+      }).capacity,
+    ).toBe(3);
+  });
+
+  it("locks a Pig over capacity, oldest first", () => {
+    const game = {
+      ...TEST_FARM,
+      collectibles: {},
+      pigpen: { level: 1, animals: makeAnimals(4, "Pig") },
+    };
+
+    // Four Pigs in a capacity-3 pen: the oldest is dormant, the rest feedable.
+    expect(getOverCapacityAnimalIds("pigpen", game)).toEqual(new Set(["0"]));
+  });
+});
+
+describe("getAnimalBuildingCapacity", () => {
+  // The upgrade modal advertises the delta between two levels of this, so a
+  // building whose table does not step by 5 must not borrow the shared formula.
+  it("steps the Pigpen by 3", () => {
+    expect(
+      [1, 2, 3].map((level) => getAnimalBuildingCapacity("pigpen", level)),
+    ).toEqual([3, 6, 9]);
+  });
+
+  it("steps the Barn and Hen House by 5", () => {
+    expect(
+      [1, 2, 3].map((level) => getAnimalBuildingCapacity("barn", level)),
+    ).toEqual([10, 15, 20]);
+    expect(
+      [1, 2, 3].map((level) => getAnimalBuildingCapacity("henHouse", level)),
+    ).toEqual([10, 15, 20]);
+  });
+});

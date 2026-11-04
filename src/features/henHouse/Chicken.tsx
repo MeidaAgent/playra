@@ -1,0 +1,834 @@
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { isBeetle } from "features/game/types/beetles";
+import { hasFeatureAccess } from "lib/flags";
+import { SUNNYSIDE } from "assets/sunnyside";
+import { GRID_WIDTH_PX, PIXEL_SCALE } from "features/game/lib/constants";
+import type { MachineState } from "features/game/lib/gameMachine";
+import { Context } from "features/game/GameProvider";
+import { useInterpret, useSelector } from "@xstate/react";
+import { useNow } from "lib/utils/hooks/useNow";
+import { PRE_ACTION_TICK_MS } from "features/game/lib/timerDisplay";
+import { capitalize } from "lib/utils/capitalize";
+import {
+  animalMachine,
+  type AnimalMachineInterpreter,
+  type TState as AnimalMachineState,
+  type TState,
+} from "features/game/lib/animalMachine";
+import {
+  getAnimalFavoriteFood,
+  getAnimalLevel,
+  getBoostedFoodQuantity,
+  getFeedItem,
+  isFoodForAnimal,
+  getFeedQuantity,
+  resolveAnimal,
+} from "features/game/lib/animals";
+import classNames from "classnames";
+import { LevelProgress } from "features/game/expansion/components/animals/LevelProgress";
+import { RequestBubble } from "features/game/expansion/components/animals/RequestBubble";
+import { Transition } from "@headlessui/react";
+import { useAppTranslation } from "lib/i18n/useAppTranslations";
+import type {
+  AnimalFeedBuffName,
+  AnimalFoodName,
+  AnimalMedicineName,
+  InventoryItemName,
+  LoveAnimalItem,
+  MutantAnimal,
+} from "features/game/types/game";
+import { isAnimalFeedBuffItem } from "features/game/events/landExpansion/applyAnimalFeedBuff";
+import { AnimalFeedBuffBadge } from "features/game/expansion/components/animals/AnimalFeedBuffBadge";
+import { ProduceDrops } from "features/game/expansion/components/animals/ProduceDrops";
+import { useSound } from "lib/utils/hooks/useSound";
+import { InfoPopover } from "features/island/common/InfoPopover";
+import Decimal from "decimal.js-light";
+import {
+  getBarnDelightCost,
+  handleFoodXP,
+  getFeedBatchSize,
+  REQUIRED_FOOD_QTY,
+} from "features/game/events/landExpansion/feedAnimal";
+import { getAnimalXP } from "features/game/events/landExpansion/loveAnimal";
+import { isAnimalFeedable } from "features/game/events/landExpansion/buyAnimal";
+import { isAnimalCoveredByGoldenAsset } from "features/game/events/landExpansion/feedAllAnimals";
+import { MutantAnimalModal } from "features/farming/animals/components/MutantAnimalModal";
+import { MutantSparkles } from "features/farming/animals/components/MutantSparkles";
+import { isWearableActive } from "features/game/lib/wearables";
+import { Modal } from "components/ui/Modal";
+import { CloseButtonPanel } from "features/game/components/CloseablePanel";
+import { OuterPanel } from "components/ui/Panel";
+import { SleepingAnimalModal } from "features/barn/components/SleepingAnimalModal";
+import { LockedAnimalModal } from "features/barn/components/LockedAnimalModal";
+
+export const CHICKEN_EMOTION_ICONS: Record<
+  Exclude<TState["value"], "idle" | "needsLove" | "initial" | "sick">,
+  {
+    icon: string;
+    width: number;
+    top: number;
+    right: number;
+  }
+> = {
+  ready: {
+    icon: SUNNYSIDE.icons.expression_ready,
+    width: PIXEL_SCALE * 8,
+    top: PIXEL_SCALE * -2.3,
+    right: PIXEL_SCALE * 3.7,
+  },
+  happy: {
+    icon: SUNNYSIDE.icons.happy,
+    width: PIXEL_SCALE * 7,
+    top: PIXEL_SCALE * -1.3,
+    right: PIXEL_SCALE * 3.7,
+  },
+  sad: {
+    icon: SUNNYSIDE.icons.sad,
+    width: PIXEL_SCALE * 7,
+    top: PIXEL_SCALE * -1.3,
+    right: PIXEL_SCALE * 3.7,
+  },
+  sleeping: {
+    icon: SUNNYSIDE.icons.sleeping,
+    width: PIXEL_SCALE * 9,
+    top: PIXEL_SCALE * -3.5,
+    right: PIXEL_SCALE * 2,
+  },
+};
+
+const _animalState = (state: AnimalMachineState) =>
+  // Casting here because we know the value is always a string rather than an object
+  // This helps to be able to use the string as a key in the CHICKEN_STATES object
+  state.value as AnimalMachineState["value"];
+
+const _chicken = (id: string) => (state: MachineState) =>
+  state.context.state.henHouse.animals[id];
+const _game = (state: MachineState) => state.context.state;
+const _inventory = (state: MachineState) => state.context.state.inventory;
+
+export const getMedicineOption = (): {
+  name: InventoryItemName;
+  icon: InventoryItemName;
+  showSecondaryImage: boolean;
+}[] => [
+  {
+    name: "Barn Delight" as InventoryItemName,
+    icon: "Barn Delight" as InventoryItemName,
+    showSecondaryImage: false,
+  },
+];
+
+export const Chicken: React.FC<{ id: string; disabled: boolean }> = ({
+  id,
+  disabled,
+}) => {
+  // The Bantam Shrine's -5% feed cost only applies while the shrine is active,
+  // so the required-food display needs a LIVE clock — a mount snapshot would
+  // keep showing the discount after the shrine expired. One tick a minute is
+  // enough for a boost that flips at most a few times a day.
+  const now = useNow({ live: true, intervalMs: PRE_ACTION_TICK_MS });
+  const { gameService, selectedItem, shortcutItem } = useContext(Context);
+  const { t } = useAppTranslation();
+  const storedChicken = useSelector(gameService, _chicken(id));
+  const game = useSelector(gameService, _game);
+  // The animal machine has no access to game state, so every consumer below —
+  // the machine included — is handed the animal with its live windowed wake time
+  // substituted in. Read-only: nothing here writes an animal back.
+  const chicken = useMemo(
+    () => resolveAnimal(storedChicken, game),
+    [storedChicken, game],
+  );
+  const inventory = useSelector(gameService, _inventory);
+  const chickenService = useInterpret(animalMachine, {
+    context: { animal: chicken },
+    devTools: true,
+  }) as unknown as AnimalMachineInterpreter;
+
+  const chickenMachineState = useSelector(chickenService, _animalState);
+
+  useEffect(() => {
+    if (chicken.awakeAt < Date.now() && chickenMachineState === "sleeping") {
+      chickenService.send({
+        type: "INSTANT_WAKE_UP",
+        animal: chicken,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chicken.awakeAt]);
+
+  useEffect(() => {
+    if (chicken.state === "sick" && chickenMachineState !== "sick") {
+      chickenService.send({
+        type: "SICK",
+        animal: chicken,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chicken.state]);
+
+  const [showDrops, setShowDrops] = useState(false);
+  const [showAnimalDetails, setShowAnimalDetails] = useState(false);
+  const [showNotEnoughFood, setShowNotEnoughFood] = useState(false);
+  const [showNoMedicine, setShowNoMedicine] = useState(false);
+  const [showLockedDetails, setShowLockedDetails] = useState(false);
+  const [showFeedXP, setShowFeedXP] = useState(false);
+  // Captured when feeding: a level-up changes what the same feed is worth.
+  const [feedXPAmount, setFeedXPAmount] = useState(0);
+  const [showNoFoodSelected, setShowNoFoodSelected] = useState(false);
+  const [showLoveItem, setShowLoveItem] = useState<LoveAnimalItem>();
+  const [showMutantAnimalModal, setShowMutantAnimalModal] = useState(false);
+
+  const favFood = getAnimalFavoriteFood("Chicken", chicken.experience);
+  const sleeping = chickenMachineState === "sleeping";
+  const needsLove = chickenMachineState === "needsLove";
+  const ready = chickenMachineState === "ready";
+  const idle = chickenMachineState === "idle";
+  const sick = chickenMachineState === "sick" || chicken.state === "sick";
+  // Over-capacity animals (e.g. the Chicken Coop was removed/sold after buying
+  // animals) cannot be fed. They go dormant (rendered like a sleeping animal)
+  // but can still be cured and sold to bounties.
+  const isLocked = !isAnimalFeedable("henHouse", game, id);
+
+  // Sounds
+  const { play: playFeedAnimal } = useSound("feed_animal");
+  const { play: playChickenCollect } = useSound("chicken_collect");
+  const { play: playProduceDrop } = useSound("produce_drop");
+  const { play: playLevelUp } = useSound("level_up");
+  const { play: playCureAnimal } = useSound("cure_animal");
+
+  const lastSynced = useRef({
+    state: chicken.state,
+    experience: chicken.experience,
+  });
+
+  // Sync the local machine when game state changes underneath it,
+  // e.g. via the Feed All button (bulk feed/cure/claim without a click).
+  useEffect(() => {
+    const prev = lastSynced.current;
+    lastSynced.current = {
+      state: chicken.state,
+      experience: chicken.experience,
+    };
+
+    if (
+      prev.state === chicken.state &&
+      prev.experience === chicken.experience
+    ) {
+      return;
+    }
+
+    const machineState = () => chickenService.getSnapshot().value;
+
+    if (machineState() === "sick" && chicken.state !== "sick") {
+      chickenService.send({ type: "CURE", animal: chicken });
+    }
+
+    // A bulk claim happens without a click — play the same drop animation
+    // and sounds as a manual claim before the sprite transitions.
+    const animateBulkClaim = async (
+      event: "CLAIM_PRODUCE" | "INSTANT_WAKE_UP",
+    ) => {
+      setShowDrops(true);
+      playProduceDrop();
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      playChickenCollect();
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      playLevelUp();
+      chickenService.send({ type: event, animal: chicken });
+      setShowDrops(false);
+    };
+
+    if (machineState() === "ready" && chicken.state === "idle") {
+      animateBulkClaim("CLAIM_PRODUCE");
+    }
+
+    if (
+      ["idle", "happy", "sad"].includes(machineState() as string) &&
+      chicken.state === "idle" &&
+      Date.now() < chicken.awakeAt
+    ) {
+      // Bulk feeding can level an animal to ready and claim its produce in
+      // the same event; INSTANT_WAKE_UP re-derives the machine state from
+      // the animal, which maps an asleep animal to "sleeping".
+      animateBulkClaim("INSTANT_WAKE_UP");
+    }
+
+    if (
+      ["idle", "happy", "sad"].includes(machineState() as string) &&
+      ["happy", "sad", "ready"].includes(chicken.state) &&
+      machineState() !== chicken.state
+    ) {
+      chickenService.send({ type: "FEED", animal: chicken });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chicken.state, chicken.experience]);
+
+  // One click feeds the whole batch that gets the Chicken ready.
+  const feedBatchSize = getFeedBatchSize({ state: game, animal: chicken });
+  const { foodQuantity: quantityPerFeed } = getBoostedFoodQuantity({
+    animalType: "Chicken",
+    foodQuantity: REQUIRED_FOOD_QTY.Chicken,
+    game,
+    animal: chicken,
+    now,
+  });
+  const requiredFoodQty = quantityPerFeed.mul(feedBatchSize);
+
+  const hasGoldEgg = isAnimalCoveredByGoldenAsset({
+    state: game,
+    animalType: "Chicken",
+  });
+
+  const hasOracleSyringeEquipped = isWearableActive({
+    name: "Oracle Syringe",
+    game,
+  });
+
+  // Check if the chicken has a mutant
+  const { name: mutantName } = chicken.reward?.items?.[0] ?? {};
+
+  const hasBeetleFeedingAccess = hasFeatureAccess(game, "BEETLE_FEEDING");
+
+  const feedChicken = (item?: InventoryItemName) => {
+    setFeedXPAmount(getAnimalXPEarned(item));
+
+    const updatedState = gameService.send({
+      type: "animal.fed",
+      animal: "Chicken",
+      item: item ? (item as AnimalFoodName) : undefined,
+      id: chicken.id,
+    });
+
+    setShowFeedXP(true);
+    setTimeout(() => setShowFeedXP(false), 700);
+
+    // Resolve before handing it to the machine: the raw record carries the
+    // stale cached `awakeAt`, and the machine's sleep guard has no game state
+    // of its own to re-derive from.
+    const updatedChicken = resolveAnimal(
+      updatedState.context.state.henHouse.animals[id],
+      updatedState.context.state,
+    );
+
+    chickenService.send({
+      type: "FEED",
+      animal: updatedChicken,
+    });
+
+    playFeedAnimal();
+  };
+
+  const onLoveClick = async () => {
+    if ((inventory[chicken.item] ?? new Decimal(0)).lt(1)) {
+      handleShowDetails();
+      return;
+    }
+
+    shortcutItem(chicken.item);
+    loveChicken(chicken.item);
+  };
+
+  const loveChicken = (item = selectedItem) => {
+    const updatedState = gameService.send({
+      type: "animal.loved",
+      animal: "Chicken",
+      id: chicken.id,
+      item: item as LoveAnimalItem,
+    });
+
+    setShowLoveItem(item as LoveAnimalItem);
+    setTimeout(() => setShowLoveItem(undefined), 700);
+
+    // Resolve before handing it to the machine: the raw record carries the
+    // stale cached `awakeAt`, and the machine's sleep guard has no game state
+    // of its own to re-derive from.
+    const updatedChicken = resolveAnimal(
+      updatedState.context.state.henHouse.animals[id],
+      updatedState.context.state,
+    );
+
+    chickenService.send({
+      type: "LOVE",
+      animal: updatedChicken,
+    });
+
+    playFeedAnimal();
+  };
+
+  const claimProduce = async () => {
+    const updatedState = gameService.send({
+      type: "produce.claimed",
+      animal: "Chicken",
+      id: chicken.id,
+    });
+
+    // Resolve before handing it to the machine: the raw record carries the
+    // stale cached `awakeAt`, and the machine's sleep guard has no game state
+    // of its own to re-derive from.
+    const updatedChicken = resolveAnimal(
+      updatedState.context.state.henHouse.animals[id],
+      updatedState.context.state,
+    );
+
+    chickenService.send({
+      type: "CLAIM_PRODUCE",
+      animal: updatedChicken,
+    });
+  };
+
+  const cureChicken = (item = selectedItem) => {
+    const updatedState = gameService.send("animal.fed", {
+      animal: "Chicken",
+      item: item as AnimalMedicineName,
+      id: chicken.id,
+    });
+
+    // Resolve before handing it to the machine: the raw record carries the
+    // stale cached `awakeAt`, and the machine's sleep guard has no game state
+    // of its own to re-derive from.
+    const updatedChicken = resolveAnimal(
+      updatedState.context.state.henHouse.animals[id],
+      updatedState.context.state,
+    );
+
+    chickenService.send({
+      type: "CURE",
+      animal: updatedChicken,
+    });
+  };
+
+  const handleShowDetails = () => {
+    // Check if an event has been fired in the last 0.5 seconds - if so return;
+    const actions = gameService.getSnapshot().context.actions;
+    const lastEventTime =
+      actions.length > 0 ? actions[actions.length - 1]?.createdAt : undefined;
+    const currentTime = Date.now();
+
+    if (currentTime - (lastEventTime?.getTime() ?? 0) < 500) return;
+
+    setShowAnimalDetails(true);
+  };
+
+  const onSickClick = async () => {
+    const medicineCount = inventory["Barn Delight"] ?? new Decimal(0);
+    const { amount: barnDelightCost } = getBarnDelightCost({ state: game });
+    const hasEnoughMedicine = medicineCount.gte(barnDelightCost);
+
+    if (hasOracleSyringeEquipped) {
+      playCureAnimal();
+      cureChicken("Barn Delight");
+      return;
+    }
+
+    if (hasEnoughMedicine) {
+      playCureAnimal();
+      cureChicken("Barn Delight");
+      return;
+    }
+
+    setShowNoMedicine(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setShowNoMedicine(false);
+
+    return;
+  };
+
+  const onReadyClick = async () => {
+    if (mutantName && !showMutantAnimalModal) {
+      setShowMutantAnimalModal(true);
+      return;
+    }
+
+    setShowDrops(true);
+    playProduceDrop();
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    playChickenCollect();
+
+    await new Promise((resolve) => setTimeout(resolve, 900));
+
+    playLevelUp();
+    claimProduce();
+    setShowDrops(false);
+
+    return;
+  };
+
+  const handleClick = async () => {
+    if (disabled) return;
+    // A bulk-claim animation is in flight: the sprite still looks awake but
+    // the game-state animal is already asleep, so any feed/claim event would
+    // throw. Ignore clicks until the animation resolves.
+    if (showDrops) return;
+
+    const showNoFoodPrompt = async () => {
+      setShowNoFoodSelected(true);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setShowNoFoodSelected(false);
+    };
+
+    if (sick) return onSickClick();
+
+    if (needsLove) {
+      if (!hasGoldEgg) return onLoveClick();
+
+      handleShowDetails();
+      return;
+    }
+
+    const hasBuffSelected = selectedItem && isAnimalFeedBuffItem(selectedItem);
+
+    if (hasBuffSelected) {
+      const buffItem = selectedItem as AnimalFeedBuffName;
+      const buffCount = inventory[buffItem] ?? new Decimal(0);
+      if (!chicken.feedBuff && buffCount.gte(1)) {
+        gameService.send({
+          type: "animal.feedBuffApplied",
+          animal: "Chicken",
+          id: chicken.id,
+          item: buffItem,
+        });
+        playFeedAnimal();
+        return;
+      }
+
+      await showNoFoodPrompt();
+      return;
+    }
+
+    if (sleeping) {
+      handleShowDetails();
+      return;
+    }
+
+    if (ready) {
+      // Already animating
+      if (showDrops) return;
+      return onReadyClick();
+    }
+
+    // Defensive: never let the capacity lock block curing a sick animal
+    // (sick is handled above via onSickClick); only normal feeding is gated.
+    // Locked animals behave like sleeping ones: clicking opens an info modal.
+    if (isLocked && !sick) {
+      setShowLockedDetails(true);
+      return;
+    }
+
+    if (hasGoldEgg) {
+      feedChicken();
+      return;
+    }
+
+    // Auto-select the favourite food when it is held so a stale selection
+    // (e.g. Hay left over from the barn) never feeds the wrong item.
+    const feedItem = getFeedItem({
+      animal: "Chicken",
+      selectedItem,
+      favouriteFood: favFood,
+      inventory,
+      requiredQty: requiredFoodQty,
+      hasBeetleFeedingAccess,
+    });
+    if (feedItem && feedItem !== selectedItem) {
+      shortcutItem(feedItem);
+    }
+
+    // Without access a Beetle is not food here, so the click falls through to
+    // the no-food prompt instead of an event the reducer would reject.
+    const hasFoodSelected =
+      feedItem &&
+      (isFoodForAnimal("Chicken", feedItem) ||
+        (hasBeetleFeedingAccess && isBeetle(feedItem)));
+
+    if (hasFoodSelected) {
+      const foodCount = inventory[feedItem as AnimalFoodName] ?? new Decimal(0);
+      if (foodCount.lt(getFeedQuantity(feedItem, requiredFoodQty))) {
+        setShowNotEnoughFood(true);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setShowNotEnoughFood(false);
+        return;
+      }
+
+      feedChicken(feedItem);
+      return;
+    }
+
+    await showNoFoodPrompt();
+  };
+
+  const getInfoPopoverMessage = () => {
+    if (showNoFoodSelected) return t("animal.noFoodMessage");
+    if (showNoMedicine) return t("animal.noMedicine");
+    if (showNotEnoughFood)
+      return t("animal.notEnoughFood", {
+        amount: getFeedQuantity(selectedItem, requiredFoodQty),
+      });
+  };
+
+  const getAnimalXPEarned = (item?: InventoryItemName) => {
+    const { foodXp } = handleFoodXP({
+      state: game,
+      animal: "Chicken",
+      level,
+      food: hasGoldEgg ? favFood : (item as AnimalFoodName),
+    });
+
+    // A Beetle is one per click; anything else is the whole batch.
+    return item && isBeetle(item) ? foodXp : foodXp * feedBatchSize;
+  };
+
+  const animalImageInfo = () => {
+    if (ready) {
+      return {
+        image: SUNNYSIDE.animals.chickenReady,
+        width: PIXEL_SCALE * 13,
+      };
+    }
+
+    if (sleeping || needsLove) {
+      return {
+        image: SUNNYSIDE.animals.chickenAsleep,
+        width: PIXEL_SCALE * 13,
+      };
+    }
+
+    if (sick) {
+      return {
+        image: SUNNYSIDE.animals.chickenSick,
+        width: PIXEL_SCALE * 11,
+      };
+    }
+
+    // Locked (over-capacity) animals are dormant - show them sleeping.
+    if (isLocked) {
+      return {
+        image: SUNNYSIDE.animals.chickenAsleep,
+        width: PIXEL_SCALE * 13,
+      };
+    }
+
+    return {
+      image: SUNNYSIDE.animals.chickenIdle,
+      width: PIXEL_SCALE * 11,
+    };
+  };
+
+  const requestBubbleRequest = () => {
+    if (sick) return "Barn Delight";
+    if (needsLove) return chicken.item;
+    return favFood;
+  };
+  const showRequestBubble =
+    sick || (needsLove && !hasGoldEgg) || (idle && !isLocked && !showDrops);
+
+  if (chickenMachineState === "initial") return null;
+
+  const level = getAnimalLevel(chicken.experience, "Chicken");
+  const xpIndicatorColor =
+    favFood === selectedItem ||
+    selectedItem === "Omnifeed" ||
+    (hasBeetleFeedingAccess && !!selectedItem && isBeetle(selectedItem)) ||
+    hasGoldEgg
+      ? "#71e358"
+      : "#fff";
+
+  const { animalXP } = getAnimalXP({
+    state: game,
+    name: showLoveItem!,
+    animal: "Chicken",
+  });
+
+  return (
+    <>
+      {mutantName && (
+        <MutantAnimalModal
+          mutant={mutantName as MutantAnimal}
+          show={!!showMutantAnimalModal}
+          onContinue={() => {
+            setShowMutantAnimalModal(false);
+            onReadyClick();
+          }}
+        />
+      )}
+
+      <div
+        className="relative cursor-pointer w-full h-full flex items-center justify-center"
+        style={{
+          width: `${GRID_WIDTH_PX * 2}px`,
+          height: `${GRID_WIDTH_PX * 2}px`,
+        }}
+        onClick={handleClick}
+      >
+        <div
+          className="relative w-full h-full"
+          style={{
+            height: `${PIXEL_SCALE * 19}px`,
+          }}
+        >
+          <AnimalFeedBuffBadge feedBuff={chicken.feedBuff} />
+          {showDrops && (
+            <ProduceDrops
+              animal={chicken}
+              multiplier={chicken.multiplier ?? 0}
+              level={level}
+              animalType="Chicken"
+              className="bottom-0 left-1/2 -translate-x-1/2"
+            />
+          )}
+
+          <img
+            src={SUNNYSIDE.animals.chickenShadow}
+            className="bottom-0 absolute left-1/2 transform -translate-x-1/2"
+            style={{
+              width: `${PIXEL_SCALE * 13}px`,
+            }}
+          />
+          <img
+            src={animalImageInfo().image}
+            alt={`${capitalize(chickenMachineState)} Chicken`}
+            style={{
+              width: `${animalImageInfo().width}px`,
+            }}
+            className={classNames(
+              "absolute ml-[1px] top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
+              {
+                "mt-[2px]": !sleeping && !ready && !isLocked,
+                "mt-[3px]": sleeping || ready || isLocked,
+              },
+            )}
+          />
+          {/* Upcoming Mutant Sign */}
+          {mutantName && <MutantSparkles />}
+          {/* Emotion */}
+          {!idle && !needsLove && !sick && (
+            <img
+              src={CHICKEN_EMOTION_ICONS[chickenMachineState].icon}
+              alt={`${capitalize(chickenMachineState)} Chicken`}
+              style={{
+                width: `${CHICKEN_EMOTION_ICONS[chickenMachineState].width}px`,
+                top: CHICKEN_EMOTION_ICONS[chickenMachineState].top,
+                right: CHICKEN_EMOTION_ICONS[chickenMachineState].right,
+              }}
+              className="absolute pointer-events-none"
+            />
+          )}
+          {/* Request */}
+          {showRequestBubble && (
+            <RequestBubble
+              top={PIXEL_SCALE * -3.5}
+              left={PIXEL_SCALE * 20}
+              request={requestBubbleRequest()}
+              quantity={
+                idle && !hasGoldEgg ? requiredFoodQty.toNumber() : undefined
+              }
+            />
+          )}
+          {/* Over-capacity lock */}
+          {isLocked && (
+            <img
+              src={SUNNYSIDE.icons.lock}
+              alt={t("animal.overCapacity")}
+              className="absolute z-20 pointer-events-none"
+              style={{
+                width: `${PIXEL_SCALE * 7}px`,
+                top: `${PIXEL_SCALE * 1}px`,
+                right: `${PIXEL_SCALE * 1}px`,
+              }}
+            />
+          )}
+        </div>
+        <InfoPopover
+          showPopover={
+            showNoFoodSelected || showNoMedicine || showNotEnoughFood
+          }
+          className="-top-10 left-1/2 transform -translate-x-1/2 z-20"
+        >
+          <p className="text-xs p-0.5 py-1 font-secondary">
+            {getInfoPopoverMessage()}
+          </p>
+        </InfoPopover>
+      </div>
+      <Modal
+        show={showAnimalDetails}
+        onHide={() => setShowAnimalDetails(false)}
+      >
+        <CloseButtonPanel
+          container={OuterPanel}
+          onClose={() => setShowAnimalDetails(false)}
+        >
+          <SleepingAnimalModal
+            id={chicken.id}
+            animal={chicken}
+            awakeAt={chicken.awakeAt}
+            onClose={() => setShowAnimalDetails(false)}
+          />
+        </CloseButtonPanel>
+      </Modal>
+      <Modal
+        show={showLockedDetails}
+        onHide={() => setShowLockedDetails(false)}
+      >
+        <CloseButtonPanel
+          container={OuterPanel}
+          onClose={() => setShowLockedDetails(false)}
+        >
+          <LockedAnimalModal animal={chicken} />
+        </CloseButtonPanel>
+      </Modal>
+      {/* Level Progress */}
+      <LevelProgress
+        animalState={chickenMachineState}
+        experience={chicken.experience}
+        animal={chicken}
+        className="absolute bottom-1 left-1/2 transform -translate-x-1/2 ml-0.5 pointer-events-none"
+        // Don't block level up UI with wakes in panel if accidentally clicked
+        onLevelUp={() => setShowAnimalDetails(false)}
+      />
+      {/* Feed XP */}
+      <Transition
+        appear={true}
+        id="oil-reserve-collected-amount"
+        show={showFeedXP}
+        enter="transition-opacity transition-transform duration-200"
+        enterFrom="opacity-0 translate-y-4"
+        enterTo="opacity-100 -translate-y-0"
+        leave="transition-opacity duration-100"
+        leaveFrom="opacity-100"
+        leaveTo="opacity-0"
+        className="flex top-1 left-1/2 -translate-x-1/2 absolute z-40 pointer-events-none"
+        as="div"
+      >
+        <span
+          className="text-sm yield-text"
+          style={{
+            color: xpIndicatorColor,
+          }}
+        >
+          {!!feedXPAmount && `+${feedXPAmount}`}
+        </span>
+      </Transition>
+      <Transition
+        appear={true}
+        id="love-xp"
+        show={!!showLoveItem}
+        enter="transition-opacity transition-transform duration-200"
+        enterFrom="opacity-0 translate-y-4"
+        enterTo="opacity-100 -translate-y-0"
+        leave="transition-opacity duration-100"
+        leaveFrom="opacity-100"
+        leaveTo="opacity-0"
+        className="flex top-1 left-1/2 -translate-x-1/2 absolute z-40 pointer-events-none"
+        as="div"
+      >
+        <span
+          className="text-sm yield-text"
+          style={{
+            color: "#ffffff",
+          }}
+        >
+          {!!animalXP && `+${animalXP}`}
+        </span>
+      </Transition>
+    </>
+  );
+};

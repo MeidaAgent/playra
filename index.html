@@ -1,0 +1,985 @@
+﻿<!DOCTYPE html>
+<!--
+  ======================================================================
+   Playra - WEBSITE SECTION (PRE-GAME PORTAL)
+  ----------------------------------------------------------------------
+  This section contains the public website experience:
+  - Landing Page: /website/index.html
+  - About:        /website/about/index.html
+  - Docs:         /website/docs/index.html
+  - ToS:          /website/terms-of-service/index.html
+  - Privacy:      /website/privacy-policy/index.html
+  - CSS & Fonts:  /website/css/
+  - Web Assets:   /website/assets/
+  
+  For Game files, check:
+  - Game Entry:   /play/index.html
+  - Game Logic:   /src/
+  - Game Assets:  /public/
+  ======================================================================
+-->
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/tab_icon.png?v=6" />
+  <link rel="shortcut icon" href="/favicon.ico?v=6" />
+  <link rel="apple-touch-icon" href="/tab_icon.png?v=6" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description"
+    content="Playra is a free-to-play browser farming game. Farm crops, fish, earn in-game rewards, and build your farming empire - connect your account to start." />
+  <title>Playra - Free Browser Farming Game | Play and Grow on Playra</title>
+  <link rel="canonical" href="https://www.playra.io/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Playra - Free Browser Farming Game | Play and Grow on Playra" />
+  <meta property="og:description"
+    content="Farm crops, fish, earn in-game rewards, and build your farming empire in Playra. Connect your account to start." />
+  <meta property="og:image" content="/assets/plank_logo.png" />
+  <meta property="og:url" content="https://www.playra.io/" />
+  <meta property="og:site_name" content="Playra" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="Playra" />
+  <meta name="twitter:title" content="Playra - Free Browser Farming Game | Play and Grow on Playra" />
+  <meta name="twitter:description"
+    content="Farm crops, fish, earn in-game rewards, and build your farming empire. Connect your account to play on Playra." />
+  <meta name="twitter:image" content="/assets/plank_logo.png" />
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" />
+
+
+
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-EM6CNBH1F8"></script>
+
+  <script>
+    const host = window.location.host.replace(/^www\./, "");
+    const PROMO_LS_KEY = `sb_wiz.promo-key.v.${host}`;
+    const REFERRER_LS_KEY = `sb_wiz.ref-key.v.${host}`;
+    const SOURCE_LS_KEY = `sb_wiz.source-key.v.${host}`;
+
+    const promoCode = new URLSearchParams(window.location.search).get(
+      "promo"
+    );
+    const referrer = new URLSearchParams(window.location.search).get("ref");
+
+    if (promoCode) {
+      localStorage.setItem(PROMO_LS_KEY, promoCode);
+    }
+    if (referrer) {
+      localStorage.setItem(REFERRER_LS_KEY, referrer);
+    }
+
+    var sourceURL = document.referrer;
+    if (sourceURL) {
+      localStorage.setItem(SOURCE_LS_KEY, sourceURL);
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const utm_source = urlParams.get("utm_source");
+    if (utm_source) localStorage.setItem("utm_source", utm_source);
+    const utm_medium = urlParams.get("utm_medium");
+    if (utm_medium) localStorage.setItem("utm_medium", utm_medium);
+    const utm_campaign = urlParams.get("utm_campaign");
+    if (utm_campaign) localStorage.setItem("utm_campaign", utm_campaign);
+    const utm_content = urlParams.get("utm_content");
+    if (utm_content) localStorage.setItem("utm_content", utm_content);
+    const utm_term = urlParams.get("utm_term");
+    if (utm_term) localStorage.setItem("utm_term", utm_term);
+  </script>
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const grinxPriceElement = document.getElementById("grinx-price");
+      const grinxPriceContainer = document.getElementById(
+        "grinx-price-container"
+      );
+      if (!grinxPriceElement || !grinxPriceContainer) return;
+
+      const CACHE_KEY = "grinx_price_cache";
+      const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+
+      // Function to find price for a collectible item
+      function findCollectiblePrice(reports, itemId) {
+        const dates = Object.keys(reports).sort().reverse(); // Get dates sorted, most recent first
+        for (const date of dates) {
+          if (reports[date].items[`collectibles-${itemId}`]) {
+            return reports[date].items[`collectibles-${itemId}`].latestSale;
+          }
+        }
+        return null;
+      }
+
+      // Function to process and display price data
+      function processPriceData(data) {
+        // Get flower price
+        const flowerPrice = data.data.flowerPrice;
+        const reports = data.data.reports;
+
+        // Item configurations: [itemId, defaultPrice, element, container]
+        const items = [
+          [489, 1000, grinxPriceElement, grinxPriceContainer], // Grinx
+          [
+            463,
+            500,
+            document.getElementById("turtle-price"),
+            document.getElementById("turtle-price-container"),
+          ], // Turtle
+          [
+            2120,
+            400,
+            document.getElementById("gnome-price"),
+            document.getElementById("gnome-price-container"),
+          ], // Gnome
+        ];
+
+        items.forEach(
+          ([itemId, defaultPrice, priceElement, containerElement]) => {
+            if (!priceElement || !containerElement) return;
+
+            // Find the price in reports, or use default
+            let itemPrice = findCollectiblePrice(reports, itemId);
+            if (itemPrice === null) {
+              itemPrice = defaultPrice;
+            }
+
+            if (flowerPrice) {
+              // Calculate USD price: item price in $PYRA * flower price in USD
+              const usdPrice = itemPrice * flowerPrice;
+              const roundedPrice = Math.round(usdPrice);
+
+              // Hide container if price is 0, otherwise show it
+              if (roundedPrice === 0) {
+                containerElement.style.display = "none";
+              } else {
+                containerElement.style.display = "flex";
+                priceElement.textContent = roundedPrice;
+              }
+            } else {
+              // Hide container if no flower price data
+              containerElement.style.display = "none";
+            }
+          }
+        );
+      }
+
+      // Check cache first
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        try {
+          const cacheEntry = JSON.parse(cachedData);
+          const now = Date.now();
+          const cacheAge = now - cacheEntry.timestamp;
+
+          // Use cached data if it's less than 1 hour old
+          if (cacheAge < CACHE_DURATION) {
+            // Cache stores the inner data object, wrap it in expected structure
+            processPriceData({ data: cacheEntry.data });
+            return; // Exit early, using cached data
+          }
+        } catch (e) {
+          // Invalid cache, continue to fetch
+          console.error("Error parsing cached data:", e);
+        }
+      }
+
+      // No valid cache, fetch from API
+      const dots = ["", ".", "..", "..."];
+      let dotIndex = 0;
+
+      // Start loading animation
+      const loadingInterval = setInterval(() => {
+        grinxPriceElement.textContent = dots[dotIndex % dots.length];
+        dotIndex++;
+      }, 400);
+
+      // If on localhost, use the dev API
+      const url =
+        window.location.hostname === "localhost"
+          ? "https://api-dev.playra.io/data?type=marketplaceActivity"
+          : "https://api.playra.io/data?type=marketplaceActivity";
+
+      // Fetch grinx price from API
+      fetch(url)
+        .then((response) => response.json())
+        .then((data) => {
+          clearInterval(loadingInterval);
+
+          // Cache only the inner data object (data.data) with timestamp
+          const cacheData = {
+            data: data.data,
+            timestamp: Date.now(),
+          };
+          localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+
+          // Process and display the data
+          processPriceData(data);
+        })
+        .catch((error) => {
+          clearInterval(loadingInterval);
+          console.error("Error fetching price data:", error);
+          // Hide all containers on error
+          const containers = [
+            grinxPriceContainer,
+            document.getElementById("turtle-price-container"),
+            document.getElementById("gnome-price-container"),
+          ];
+          containers.forEach((container) => {
+            if (container) container.style.display = "none";
+          });
+        });
+
+      // Sync price text size with image size for all price elements
+      function syncPriceSizes() {
+        const priceIds = ["grinx-price", "turtle-price", "gnome-price"];
+        priceIds.forEach((priceId) => {
+          const priceText = document.getElementById(priceId);
+          if (!priceText) return;
+
+          // Find the image sibling (previous element in the flex container)
+          const icon = priceText.previousElementSibling;
+          if (icon && icon.tagName === "IMG") {
+            const iconHeight = icon.offsetHeight;
+            priceText.style.fontSize = `${iconHeight}px`;
+            priceText.style.lineHeight = "1";
+          }
+        });
+      }
+
+      // Sync on load and resize
+      setTimeout(syncPriceSizes, 100); // Small delay to ensure image is loaded
+      window.addEventListener("resize", syncPriceSizes);
+    });
+  </script>
+
+  <style>
+    /* Custom Dark Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #334155 #0f172a;
+    }
+
+    @keyframes color-change {
+      0% {
+        color: rgb(42, 209, 103);
+      }
+
+      50% {
+        color: #fff94e;
+      }
+
+      100% {
+        color: rgb(42, 209, 103);
+      }
+    }
+  </style>
+
+  <script>
+    const BADGE_ID = "289b1eeb4fbdb9a6";
+  </script>
+  <script type="text/javascript" src="https://static.alchemyapi.io/scripts/badge/alchemy-badge.js"></script>
+
+
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoGame",
+      "name": "Playra",
+      "description": "Playra is a free-to-play browser farming game blockchain where players grow crops, raise animals, earn in-game rewards, and build a flourishing farming empire in a balanced progression economy.",
+      "url": "https://www.playra.io",
+      "image": "https://www.playra.io/public/map_landing.gif",
+      "gamePlatform": ["Web Browser", "Playra Platform", "Browser Platform"],
+      "playMode": "MultiPlayer",
+      "genre": ["Farming Simulation", "Play and Grow", "Farming Game", "Token Economy"],
+      "applicationCategory": "Game",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Free-to-play browser farming game - connect your account to start"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Playra Ltd",
+        "url": "https://www.playra.io"
+      }
+    }
+    </script>
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Playra Ltd",
+      "url": "https://www.playra.io",
+      "logo": "https://www.playra.io/public/icon.png",
+      "foundingLocation": "Sydney, New South Wales, Australia",
+      "sameAs": [
+        "https://x.com/PlayraFarm",
+        "#"
+      ]
+    }
+    </script>
+
+
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is Playra free to play?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Playra is completely free to play. You can farm, fish, craft, and explore without having to buy any cryptocurrency or pay upfront fees. Simply connect your account to save your farm progress and start playing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need a crypto wallet to play?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Connect your supported account to play Playra and save your game inventory."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What blockchain does Playra run on?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Playra is built on Playra, a low-fee Ethereum Layer 2 network. Transactions cost a fraction of a cent, so you can craft and trade without worrying about gas fees. The $PYRA token is not launched yet and has no official contract."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the $PYRA token?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "PYRA is not currently confirmed for launch. Playra is first building and testing a stable in-game economy."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I earn in Playra?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Players earn in-game rewards by farming crops, raising animals, fishing for rare Marine Marvels, and completing NPC deliveries. The balanced progression system rewards active players with gameplay resources that can be used for farm upgrades."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are Farmers?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Farmers are your playable characters in Playra. They level up as you play, unlocking new skills, tools, and areas to explore. Farmers level up as you play, unlocking new skills, tools, and abilities unique to your farm."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is Playra different from other farming games?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Playra is fully focused on enjoyable farming gameplay and stable progression. Early pioneers receive priority access for beta tests and community updates; no token purchase or airdrop is promised."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Playra safe? Is it a scam?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Playra is a secure browser farming game built with official development practices on Playra. You only connect your wallet to authenticate securely and verify your in-game assets."
+          }
+        }
+      ]
+    }
+    </script>
+
+  <link rel="stylesheet" href="/landing/tailwind_landing.css">
+  <link rel="stylesheet" href="/landing/styles_landing.css">
+  <style>
+    html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+    body { min-height: 100vh; min-height: 100dvh; }
+    .landing-nav { padding-top: max(20px, env(safe-area-inset-top)); }
+    .landing-hero { min-height: calc(100dvh - 96px - env(safe-area-inset-top)); }
+    .landing-copy { min-width: 0; }
+    .landing-art { width: 100%; max-width: 560px; margin-inline: auto; }
+    .landing-art-image { width: 100%; max-height: min(62vh, 620px); object-fit: contain; margin-inline: auto; }
+    @media (max-width: 767px) {
+      .landing-nav { padding-top: max(12px, env(safe-area-inset-top)); }
+      .landing-hero { min-height: 0; align-content: start; padding-top: 24px; padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+      .landing-copy { text-align: center; margin-bottom: 24px; }
+      .landing-copy h1 { font-size: clamp(42px, 12vw, 64px); line-height: .92; }
+      .landing-copy > p:first-of-type { font-size: clamp(16px, 4.5vw, 20px); line-height: 1.35; }
+      .landing-copy .mt-6 { justify-content: center; }
+      .landing-copy .pixel-button { width: min(220px, calc(100vw - 40px)); justify-content: center; }
+      .landing-copy ul { justify-content: center; }
+      .landing-art { max-width: 420px; }
+      .landing-art-image { max-height: 44vh; }
+    }
+    @media (min-width: 768px) {
+      .landing-hero { display: flex; flex-wrap: nowrap; }
+      .landing-copy { width: 50%; }
+      .landing-art { width: 50%; align-self: center; }
+      .landing-art-image { max-height: min(68vh, 620px); }
+    }
+    @supports (-webkit-touch-callout: none) {
+      .landing-nav { padding-top: max(12px, env(safe-area-inset-top)); }
+    }
+  </style>
+</head>
+
+<body class="antialiased bg-body text-body font-body">
+  <div class="">
+    <section class="relative overflow-hidden flex flex-col wave-bottom ocean-bg">
+      <nav class="shell landing-nav relative z-10 flex items-center justify-between gap-4 pt-5 md:pt-6">
+        <a class="block flex-shrink-0" href="/">
+          <img class="h-14 sm:h-16 md:h-24 w-auto object-contain" src="/assets/plank_logo.png" alt="Playra Logo" />
+        </a>
+
+        <div class="hidden md:flex items-center gap-8">
+          <a class="flex items-center gap-2.5 text-white hover:text-yellow-300 transition-colors"
+            style="font-family: m5x7; font-size: 28px; line-height: 1; text-decoration: none;" href="/docs/#tokenomics">
+            <img src="/assets/token.png" alt="$PYRA" class="h-9 sm:h-10 w-auto flex-shrink-0 object-contain"
+              style="max-height: 38px;" />
+            <span class="underline">$PYRA</span>
+          </a>
+
+          <a class="flex items-center gap-2 text-white hover:text-yellow-300 transition-colors"
+            style="font-family: m5x7; font-size: 28px; line-height: 1" href="/whitepaper/">
+            <span class="underline">Whitepaper</span>
+          </a>
+
+          <a class="flex items-center gap-2 text-white hover:text-yellow-300 transition-colors"
+            style="font-family: m5x7; font-size: 28px; line-height: 1" href="/docs/">
+            <span class="underline">Docs</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="shell landing-hero relative z-10 flex-1 flex flex-wrap items-center pt-10 sm:pt-16 pb-40 md:pb-56 xl:pb-72">
+        <div class="landing-copy w-full md:w-1/2 md:pr-10 mb-12 md:mb-0">
+          <h1 class="text-lg sm:text-xl lg:text-2xl text-white" style="text-shadow: 0px 2px #1f6dd5">
+            Farm. Grow. Trade
+          </h1>
+
+          <p class="text-sm text-white mt-4" style="text-shadow: 0px 2px #1f6dd5">
+            The free-to-play browser farming game where you grow crops, trade resources, and earn in-game rewards.
+          </p>
+
+          <div
+            class="inline-flex items-center gap-2 mt-4 px-3 py-1.5 rounded-md text-xs font-bold bg-amber-400/95 border-2 border-amber-900/70 text-amber-950 shadow-md"
+            style="text-shadow: none; font-family: Poppins, sans-serif;"
+            role="status">
+            <span class="h-2 w-2 rounded-full bg-red-600 border border-red-900"></span>
+            <span>PLAYRA BETA</span>
+            <span class="opacity-70">|</span>
+            <span class="font-semibold">Features and token balances may change.</span>
+          </div>
+
+          <p class="text-white mt-2" style="font-family: m5x7; font-size: 24px; line-height: 1.1">
+            Be among the first pioneers to build your farm and earn early rewards.
+          </p>
+
+          <div class="mt-6 flex flex-wrap items-center gap-3">
+            <a class="pixel-button" href="/play" id="btn-play-game">Play Game</a>
+            <a class="pixel-button" style="background: #2563eb;" href="/waitlist/" id="btn-join-waitlist">Join Waitlist</a>
+          </div>
+
+          <ul class="flex flex-wrap gap-x-5 gap-y-2 mt-5 text-white"
+            style="font-family: m5x7; font-size: 20px; line-height: 1.1; opacity: 0.9">
+            <li class="inline-flex items-center gap-1.5"><svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Free Early Access</li>
+            <li class="inline-flex items-center gap-1.5"><svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Genesis Access</li>
+            <li class="inline-flex items-center gap-1.5"><svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Play in Browser</li>
+          </ul>
+        </div>
+
+        <div class="landing-art w-full md:w-1/2">
+          <div class="relative w-full">
+            <img class="landing-art-image block w-full" style="image-rendering: pixelated" src="/assets/map_landing.c8409506.gif"
+              alt="Playra farming game map - player island and game world" />
+            <div id="grinx-price-container" class="flex absolute animate-pulse" style="bottom: 92%; left: 12%">
+              <img src="/assets/usd-coin-usdc-logo.913adf09.svg" alt="" class="h-4 mr-1" />
+              <p class="text-xs text-white" id="grinx-price" style="
+                    text-shadow: 0px 2px #181425bf;
+                    line-height: 20px;
+                    font-family: Teeny;
+                  "></p>
+            </div>
+            <div id="turtle-price-container" class="flex absolute animate-pulse" style="bottom: 51.5%; left: 54%">
+              <img src="/assets/usd-coin-usdc-logo.913adf09.svg" alt="" class="h-4 mr-1" />
+              <p class="text-xs text-white" id="turtle-price" style="
+                    text-shadow: 0px 2px #181425bf;
+                    line-height: 20px;
+                    font-family: Teeny;
+                  "></p>
+            </div>
+            <div id="gnome-price-container" class="flex absolute animate-pulse" style="bottom: 80%; left: 68%">
+              <img src="/assets/usd-coin-usdc-logo.913adf09.svg" alt="" class="h-4 mr-1" />
+              <p class="text-xs text-white" id="gnome-price" style="
+                    text-shadow: 0px 2px #181425bf;
+                    line-height: 20px;
+                    font-family: Teeny;
+                  "></p>
+            </div>
+          </div>
+
+          <p class="mt-3 text-center text-white" style="
+                font-family: m5x7;
+                font-size: 18px;
+                line-height: 1.2;
+                opacity: 0.85;
+              ">
+            *Prices are reflective of last known in-game sale.
+          </p>
+        </div>
+      </div>
+
+      <div class="hero-clouds"></div>
+    </section>
+
+    <section class="section-top bg-white overflow-hidden relative">
+      <div class="shell">
+        <div class="section-head">
+          <span class="eyebrow"><span class="blue-label">What's on?</span></span>
+        </div>
+
+        <div class="flex flex-col gap-10 md:gap-12 mb-16 md:mb-20">
+
+
+
+
+          <div class="text-center">
+            <h3 class="t-subtitle">
+              <img
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAAAXNSR0IArs4c6QAAALdJREFUKJGdkrEKwjAQhr9Ax4JLM2RxjNC36Fx8AX0Kn0TwAbr5LII4tFgEO3bJ0GwF1zhYkRKxqbdc7s99/Hck8GcI5xxKahcKmK4RSmoiJbW7HNbBToOJiAD6spo9ajTVkBWtp5mu+Q1mRcu3NZTUbtKxLytWuyUA9/3HfRIE4HQdDotw0NQWU78rGwZu04TN2Xq66ZrXc5javwTIYyBNRtrxZlFST4+ax48xOOTZXw4QM3r9eAJpCjWpfFM4eAAAAABJRU5ErkJggg=="
+                alt="" class="inline-block align-middle h-8 w-auto mr-2" style="image-rendering: pixelated" />Web3 +
+              Partnerships
+            </h3>
+            <p class="t-pixel t-measure mt-3">
+              $PYRA is going multi-chain &amp; supporting more players!
+            </p>
+            <a class="inline-block mt-3 border-b border-coolGray-600 t-pixel-sm text-[#3a4466]" href="/roadmap">
+              View roadmap
+            </a>
+          </div>
+        </div>
+
+        <div class="logo-grid pb-16 md:pb-20" style="display:flex; justify-content:center;">
+          <div class="logo-tile">
+            <img src="/assets/plank_logo.png" alt="Playra platform" />
+          </div>
+        </div>
+      </div>
+
+
+    </section>
+
+    <section class="section-top bg-white overflow-hidden relative">
+      <div class="shell">
+        <div class="section-head">
+          <span class="eyebrow"><span class="blue-label">Fishing</span></span>
+          <h2 class="t-title">Collect them all</h2>
+          <p class="t-body t-measure">
+            Fish in the depths for Marine Marvels, dig for treasure and cross
+            breed flowers to find all the hidden secrets of Playra!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-top bg-white overflow-hidden">
+      <div class="shell">
+        <div class="section-head">
+          <span class="eyebrow"><span class="blue-label">Game Economy</span></span>
+          <h2 class="t-title">Build a Sustainable Farm</h2>
+          <p class="t-body t-measure">
+            Harvest crops, complete deliveries, and progress through a balanced in-game economy.
+            Expand your farm, upgrade your tools, and build long-term value through gameplay.
+          </p>
+        </div>
+      </div>
+
+
+
+      <div class="shell section">
+        <div class="section-head" style="margin-bottom: 0">
+          <span class="eyebrow"><span class="blue-label">Farmers</span></span>
+          <h2 class="t-title">Become a town hero</h2>
+          <p class="t-body t-measure">
+            Complete deliveries at the Pumpkin Plaza and foster friendships
+            with the local Farmers.
+          </p>
+        </div>
+      </div>
+
+      <div class="art-band">
+        <img src="/assets/plaza.80e127bb.gif"
+          alt="Pumpkin Plaza town area - complete NPC deliveries in Playra" />
+        <img class="art-band-edge"
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAUAAAADICAYAAACZBDirAAAGx0lEQVR42u3dPY4URxgG4OoxKUbyGVZrkUJIRuqEm3AWbkJih2SEkCKv9gxYmNg7jnoZj7unp6t/6u95JCQLtqZrv379TXXNTE93PB6PAaBBByUANEAADRBAAwTQAAE0QAANEEADBCjWkz/++h5unj19/IvbiZZ49/Djv++//Rh721gr7etwWoOS6rfW/EMIScfLn/wtGd/9/vXv4/mDXKM/+NDYWsN4WrypGuRYv63mn3q8/Mlf7PjHBjjnQeYevNRAnp+wtU7CXvXba/6px8uf/MWO/08DnHqgsQNPHbzGAMbUYu/67Tn/1OPlT/5ixh/evnrzcugHh/6cGxrbmtLrt3T+qcfLn/wtGX+ILcT5mEvdeWopXPqzb47123P+qcfLn/zFjj/EPMjYwa9dopbs9HeMPQkp67f2/FOPlz/5WzK+u3n++sX5D7z7+P7TtQce+/mh6/BS9mKGnr3mXEKkrt/e8089Xv7kL3b8YAOMUUsIl5681PVLNf/U5E/+QspPglz7C+W8H3Pt3LY4eWvUL+X8Q4ab6fInf1NWWwGOPZOU8PaErTdst65fTvPPbSUof/J3sQGGEEJsE7z/8uHz2Ni+kLUEcOzEXarBXvVLOf+l+ZE/+UuZn8PpA8UcfGqZW/Irc1Mn79papKrfXvNPPV7+5C92/CHmQeYefKyIOezHjM3hmhMfexLWrF/q+aceL3/yt2R8N/QDY0vKsYNcWoKe7ink+Krc3cP171VaWo8t6jfnvVZbzT/1ePmTv9jx3VoncmovYWxjNacAznm5PmbZvUX9Yt9usPb8U5M/+QuxL4KkKGJsILe4H93cl+u3Onmx9ctl/iU1QfmTv9Ub4FohTHE/ulxO3lohbK35yZ/8ZdEALxVyrRBudT+6i3eo2PnExdQvp/nn2AjlT/52a4BbPBtvfT+63J615tav1VWf/MlfrCchg48tnRf02qD1j7N0fKj0Y1/In/yFdN8Kd23nz+F+cmu+SXPv+uU6/9TkT/6K+VrM1Pejw6pQ/trThYR7CSGT+8nl/uy19LOSrZM/+UvaAJcUseTlf8r6aX7yJ38ZXQKX9D9kjnNd+lnJ1smf/CVdAZbwbFzKiVv6WUmrQfmTv4QNcO09BntkyB/Fvgqc4/3kcHksfxpgMXsM9siQP4q8BM7tfnS4JJY/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1tApAbn585/jcejvf/2pk1c0QOpufLeH4X+/e9AIgUqb37XGVogAVTc/TRBouvlpgkDTzU8TZA0HJQCAwlZ/VoFA081PEyR4HyA1vM9vKe8TRAMk2+Z3u9OO892DJkjwIgjtNb9+hemSGA2Q5pqfJogGSNPNTxNEAwTQAMnpllatzwUNEEADpF73376bCxogbevfnNzasdEAsQpM1oj6Y1r9oQHS1ErQyg8NkKR+++Xn7nwFtkdjOj1Gf+x+LqABkvRFiC2b4FDzg+BmCKGpr4XM4Wslb56/fhFCCO8+vv/0+HfPnoahT2usfbl72vzevnrzMoQQ7r98+CxZ7eTvWk+c7nJuF9X/+1iQlo7fYyU41AS95UX+XAIL3/H2cHlF1P/70DPs0vFb6Vdgpw1qiyY19Ljnx6a9/FkBVnjTgD5E/TPp0vEp9wXvzy6Np34P+3zyF+wBumPKaTNYMn6rEPZ7gL3TvcDBn595aTzV/P638rQH2FT+XAI3cLuoqUuOnG4XNXU5Omc1N7f5IX9WgO6Xl3wVuHQ1GNv4rP7azF+1DbCkl9lzDt/WIRxrgHMb4tKV3toNUP7qaYJdTS/Tl/KtYDmFr9QmmKL5yV99TfDQysv0ufwOOYbvdD8mVe3m7Nul2OOTvzrzV+WSPcevRcw1eHvU79pV4NRqcG7jW3v1J3/1rQa7WvcrcgphSeHbon5zG+Ba1mqA8ldvEzzUulmby6VIieFbu34pXoVN2fzkr5xv9Kt+szblM3Gp4duqfns1hDXnK391rwR9FI7dnH50KufGR3A7rJqW7imehWt49t2rfrENces5yV/9+etyvB/YFidvThFznH9JIYyp39wmGPNY8id/Fxvg0jd6bj1+rTsGlzr/XL7XI1X95E/+1q5fdzzm+aZNgOCTIAAaIIAGCKABAmiAABoggAYIoAECaIAAGiCABghogAAaIIAGCNCAfwE6YC65zqGomgAAAABJRU5ErkJggg=="
+          alt="" />
+      </div>
+    </section>
+
+    <section class="section-top bg-white overflow-hidden relative">
+      <div class="shell">
+        <div class="section-head">
+          <span class="eyebrow"><span class="blue-label">Upgrade your island</span></span>
+          <h2 class="t-title">New areas to explore</h2>
+          <p class="t-body t-measure">
+            Upgrade your island and explore the regions of Petal Paradise,
+            Volcanic Terrain and the Swamp Lands.
+          </p>
+        </div>
+      </div>
+    </section>
+
+
+
+
+
+    <section class="section bg-white">
+      <div class="shell">
+        <figure class="relative max-w-3xl mx-auto px-8 sm:px-12 text-center">
+          <img class="absolute top-0 left-0 w-6 sm:w-auto" src="/assets/quote-top-green.46c26be2.svg" alt="" />
+          <img class="absolute bottom-0 right-0 w-6 sm:w-auto" src="/assets/quote-down-green.83bbaa0b.svg" alt="" />
+          <span class="eyebrow"><span class="blue-label">Quotes</span></span>
+          <h3 class="t-subtitle mt-3">Bloomberg</h3>
+          <blockquote class="t-pixel mt-6">
+            As Playra shows, the number of games and participants is rising
+            rapidly, as many crypto enthusiasts are also avid gamers, and the
+            idea of combining the two passions appeals to many.
+          </blockquote>
+        </figure>
+      </div>
+    </section>
+
+
+
+    <section class="section bg-white">
+      <div class="shell">
+        <div class="section-head">
+          <span class="eyebrow"><span class="blue-label">Community</span></span>
+          <h2 class="t-title" id="community">Where to find us?</h2>
+          <p class="t-body t-measure">
+            Come join us on the following platforms.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap justify-center items-center gap-6 mt-6">
+          <a target="_blank"
+            class="logo-tile logo-tile--lg logo-tile--link flex items-center justify-center gap-3 px-8 py-5 transition-transform hover:scale-105"
+            href="https://x.com/PlayraFarm" style="width: auto; min-width: 240px; text-decoration: none;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+            <span class="font-bold text-xl" style="font-family: m5x7; font-size: 26px;">Follow on X</span>
+          </a>
+        </div>
+
+        <div class="button-row mt-10">
+          <a target="_blank" class="pixel-button" href="https://forms.gle/UBDQrtMnJHKSL4kFA">Press and Enquiries</a>
+          <a target="_blank" class="pixel-button"
+            href="https://drive.google.com/drive/folders/1EkvS3EW2KRl2Hh2piUvYnAngU68O1fZ7?usp=share_link">Media Kit</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="faq section">
+      <div class="faq-grid-bg" aria-hidden="true"></div>
+
+      <div class="shell relative">
+        <div class="section-head">
+          <span class="eyebrow"><span class="blue-label">FAQ</span></span>
+          <div class="faq-rule" aria-hidden="true">
+            <i></i><span></span><i></i>
+          </div>
+          <h2 class="t-title">Help Encyclopedia</h2>
+          <p class="t-body t-measure">
+            Everything you need to know before you plant your first seed.
+          </p>
+        </div>
+
+        <div class="faq-list">
+          <div class="faq-item is-open" data-index="0">
+            <button class="faq-trigger" type="button" aria-expanded="true" aria-controls="faq-answer-0">
+              <span class="faq-q">
+                <span class="faq-num" aria-hidden="true">1</span>
+                <span class="faq-q-text">Is Playra free to play?</span>
+              </span>
+              <span class="faq-icon" aria-hidden="true">
+                <span class="faq-icon-text">-</span>
+              </span>
+            </button>
+            <div class="faq-answer" id="faq-answer-0">
+              <div class="faq-answer-inner">
+                <p class="faq-a-text">Yes. Playra is completely free to play. You can farm, fish, craft, and explore
+                  without having to buy any crypto or pay upfront fees. Simply connect your account to save your progress
+                  and begin farming.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-index="1">
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-answer-1">
+              <span class="faq-q">
+                <span class="faq-num" aria-hidden="true">2</span>
+                <span class="faq-q-text">Do I need a crypto wallet to play?</span>
+              </span>
+              <span class="faq-icon" aria-hidden="true">
+                <span class="faq-icon-text">+</span>
+              </span>
+            </button>
+            <div class="faq-answer" id="faq-answer-1">
+              <div class="faq-answer-inner">
+                <p class="faq-a-text">Yes, you connect your account (such as MetaMask, OKX, or Sequence) to play Playra.
+                  Your wallet serves as your secure account and game inventory.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-index="2">
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-answer-2">
+              <span class="faq-q">
+                <span class="faq-num" aria-hidden="true">3</span>
+                <span class="faq-q-text">What blockchain does Playra run on?</span>
+              </span>
+              <span class="faq-icon" aria-hidden="true">
+                <span class="faq-icon-text">+</span>
+              </span>
+            </button>
+            <div class="faq-answer" id="faq-answer-2">
+              <div class="faq-answer-inner">
+                <p class="faq-a-text">Playra is prioritizing a stable and fair game economy first. The $PYRA token
+                  has no confirmed launch date, network, contract, trading venue, or promised rewards.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-index="3">
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-answer-3">
+              <span class="faq-q">
+                <span class="faq-num" aria-hidden="true">4</span>
+                <span class="faq-q-text">What is the $PYRA token?</span>
+              </span>
+              <span class="faq-icon" aria-hidden="true">
+                <span class="faq-icon-text">+</span>
+              </span>
+            </button>
+            <div class="faq-answer" id="faq-answer-3">
+              <div class="faq-answer-inner">
+                <p class="faq-a-text">PYRA is not currently confirmed for launch. Playra is first building and testing a stable in-game economy.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-index="4">
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-answer-4">
+              <span class="faq-q">
+                <span class="faq-num" aria-hidden="true">5</span>
+                <span class="faq-q-text">How do I earn in Playra?</span>
+              </span>
+              <span class="faq-icon" aria-hidden="true">
+                <span class="faq-icon-text">+</span>
+              </span>
+            </button>
+            <div class="faq-answer" id="faq-answer-4">
+              <div class="faq-answer-inner">
+                <p class="faq-a-text">Players earn in-game rewards by farming crops, raising animals, fishing for rare Marine
+                  Marvels, and completing NPC deliveries. The token economy rewards skilled, active farmers with $PYRA
+                  tokens that can be used for farm upgrades.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-index="5">
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-answer-5">
+              <span class="faq-q">
+                <span class="faq-num" aria-hidden="true">6</span>
+                <span class="faq-q-text">What are Farmers & Villagers?</span>
+              </span>
+              <span class="faq-icon" aria-hidden="true">
+                <span class="faq-icon-text">+</span>
+              </span>
+            </button>
+            <div class="faq-answer" id="faq-answer-5">
+              <div class="faq-answer-inner">
+                <p class="faq-a-text">Farmers are your playable characters in Playra, living alongside friendly local
+                  Villagers. As you harvest crops and cook dishes, your Farmer levels up to unlock new tools, skills,
+                  and expansions unique to your farm.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-index="6">
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-answer-6">
+              <span class="faq-q">
+                <span class="faq-num" aria-hidden="true">7</span>
+                <span class="faq-q-text">How is Playra different from other Web3 games?</span>
+              </span>
+              <span class="faq-icon" aria-hidden="true">
+                <span class="faq-icon-text">+</span>
+              </span>
+            </button>
+            <div class="faq-answer" id="faq-answer-6">
+              <div class="faq-answer-inner">
+                <p class="faq-a-text">Playra focuses on stable gameplay, clear progression, and transparent updates.
+                  Early pioneers receive beta access opportunities and community updates. No token purchase,
+                  airdrop, or financial return is promised or required.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-index="7">
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-answer-7">
+              <span class="faq-q">
+                <span class="faq-num" aria-hidden="true">8</span>
+                <span class="faq-q-text">Is Playra safe? Is it a scam?</span>
+              </span>
+              <span class="faq-icon" aria-hidden="true">
+                <span class="faq-icon-text">+</span>
+              </span>
+            </button>
+            <div class="faq-answer" id="faq-answer-7">
+              <div class="faq-answer-inner">
+                <p class="faq-a-text">Playra is a secure browser farming game built with official development practices on Playra. You only connect your wallet to authenticate securely and verify your in-game assets.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mt-14">
+          <div class="faq-cta">
+            <img src="/plank_logo.png" alt="Playra" style="width: 72px; height: 72px; margin: 0 auto 12px auto; object-fit: contain; display: block;" />
+            <p class="t-pixel" style="color: var(--ink)">
+              Still have questions?
+            </p>
+            <p class="t-body mt-2" style="opacity: 0.8">
+              Follow our official community on X and explore our guides to start your farm today.
+            </p>
+            <div class="button-row mt-5">
+              <a href="https://x.com/PlayraFarm" target="_blank" class="pixel-button">Follow on X</a>
+              <a href="/docs/" class="pixel-button-ghost">Read the Docs</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      // Accordion: one panel open at a time, driven by an is-open class so
+      // all the styling stays in the stylesheet.
+      (function () {
+        var items = Array.prototype.slice.call(
+          document.querySelectorAll(".faq-item")
+        );
+
+        items.forEach(function (item) {
+          var trigger = item.querySelector(".faq-trigger");
+          trigger.addEventListener("click", function () {
+            var willOpen = !item.classList.contains("is-open");
+            items.forEach(function (other) {
+              var open = other === item && willOpen;
+              other.classList.toggle("is-open", open);
+              other.querySelector(".faq-icon-text").textContent = open
+                ? "-"
+                : "+";
+              other
+                .querySelector(".faq-trigger")
+                .setAttribute("aria-expanded", String(open));
+            });
+          });
+        });
+      })();
+    </script>
+
+    <section class="bg-coolGray-50 py-10">
+      <div class="shell">
+        <div class="flex items-start gap-3 p-5 sm:p-6 bg-green-100 border border-green-200 rounded-md">
+          <svg class="flex-shrink-0 mt-1" width="16" height="16" viewbox="0 0 16 16" fill="none"
+            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path
+              d="M12.4732 4.80667C12.4112 4.74418 12.3375 4.69458 12.2563 4.66074C12.175 4.62689 12.0879 4.60947 11.9999 4.60947C11.9119 4.60947 11.8247 4.62689 11.7435 4.66074C11.6623 4.69458 11.5885 4.74418 11.5266 4.80667L6.55989 9.78L4.47322 7.68667C4.40887 7.62451 4.33291 7.57563 4.24967 7.54283C4.16644 7.51003 4.07755 7.49394 3.9881 7.49549C3.89865 7.49703 3.81037 7.51619 3.72832 7.55185C3.64627 7.58751 3.57204 7.63898 3.50989 7.70333C3.44773 7.76768 3.39885 7.84364 3.36605 7.92688C3.33324 8.01011 3.31716 8.099 3.31871 8.18845C3.32025 8.2779 3.3394 8.36618 3.37507 8.44823C3.41073 8.53028 3.4622 8.60451 3.52655 8.66667L6.08655 11.2267C6.14853 11.2892 6.22226 11.3387 6.3035 11.3726C6.38474 11.4064 6.47188 11.4239 6.55989 11.4239C6.64789 11.4239 6.73503 11.4064 6.81627 11.3726C6.89751 11.3387 6.97124 11.2892 7.03322 11.2267L12.4732 5.78667C12.5409 5.72424 12.5949 5.64847 12.6318 5.56414C12.6688 5.4798 12.6878 5.38873 12.6878 5.29667C12.6878 5.2046 12.6688 5.11353 12.6318 5.02919C12.5949 4.94486 12.5409 4.86909 12.4732 4.80667Z"
+              fill="#2AD168"></path>
+          </svg>
+          <p class="t-pixel-sm text-green-900">
+            The information provided on this website does not constitute
+            investment advice, financial advice, trading advice, or any other
+            sort of advice and you should not treat any of the website's
+            content as such. Playra Ltd does not recommend that any
+            cryptocurrency should be bought, sold, or held by you. The game
+            uses a utility token that is not intended for purchase. The game
+            can be played entirely without the need to purchase any token.
+            Always do your own research.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="bg-white overflow-hidden">
+      <div class="shell">
+        <div class="flex flex-wrap items-center justify-between gap-x-8 gap-y-6 pt-16 pb-10">
+          <div class="flex items-center gap-4">
+            <a class="block flex-shrink-0" href="/" aria-label="Playra">
+              <img class="h-10 w-auto object-contain" src="/token.png" alt="Playra Token" />
+            </a>
+            <a href="#" class="block">
+              <img onclick="logBadgeClick()" id="badge-button" class="h-10 w-auto" width="240" height="53"
+                src="https://static.alchemyapi.io/images/marketing/badgeLight.png" alt="Alchemy Supercharged" />
+            </a>
+          </div>
+
+          <nav class="flex flex-wrap items-center gap-x-8 gap-y-3">
+            <a target="_blank" class="text-sm text-[#3a4466] hover:text-coolGray-600" href="/terms-of-service/">Terms of
+              Service</a>
+            <a target="_blank" class="text-sm text-[#3a4466] hover:text-coolGray-600"
+              href="/privacy-policy/">Privacy</a>
+          </nav>
+        </div>
+      </div>
+      <div class="border-b border-coolGray-100"></div>
+      <div class="shell">
+        <div class="flex flex-wrap items-center justify-between gap-x-8 gap-y-5 py-10 md:py-14">
+          <div class="w-full md:w-auto">
+            <p class="text-coolGray-400 font-medium text-base" style="font-family: m5x7">
+              &copy; 2026 Playra. All rights reserved.
+            </p>
+          </div>
+          <div class="w-full md:w-auto">
+            <div class="flex flex-wrap items-center gap-6 md:justify-end">
+              <!-- X (Twitter) -->
+              <a target="_blank" class="inline-block text-coolGray-400 hover:text-coolGray-600" href="https://x.com/PlayraFarm"
+                aria-label="X (Twitter)">
+                <svg width="18" height="18" viewbox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+</body>
+
+</html>

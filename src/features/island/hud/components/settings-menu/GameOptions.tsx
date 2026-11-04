@@ -1,0 +1,463 @@
+import React, { useContext, useEffect, useState } from "react";
+import { Modal } from "components/ui/Modal";
+import clipboard from "clipboard";
+
+import { Button } from "components/ui/Button";
+import * as Auth from "features/auth/lib/Provider";
+
+import { Context as GameContext } from "features/game/GameProvider";
+
+import { SUNNYSIDE } from "assets/sunnyside";
+import { Label } from "components/ui/Label";
+import { translate } from "lib/i18n/translate";
+
+import { CloseButtonPanel } from "features/game/components/CloseablePanel";
+import { useAppTranslation } from "lib/i18n/useAppTranslations";
+
+import { About } from "./about/About";
+import { AppearanceSettings } from "./general-settings/AppearanceSettings";
+import { AudioSettings } from "./general-settings/AudioSettings";
+import { BehaviourSettings } from "./general-settings/BehaviourSettings";
+import { Notifications } from "./general-settings/Notifications";
+import { BlockchainSettings } from "./blockchain-settings/BlockchainSettings";
+import { usePWAInstall } from "features/pwa/PWAInstallProvider";
+import { fixInstallPromptTextStyles } from "features/pwa/lib/fixInstallPromptStyles";
+import { useIsPWA } from "lib/utils/hooks/useIsPWA";
+import {
+  isMobile,
+  isIOS,
+  isSafari,
+  isAndroid,
+  isChrome,
+} from "mobile-device-detect";
+import { Account } from "./account/Account";
+import { Advanced } from "./advanced/Advanced";
+import { InstallAppModal } from "./general-settings/InstallAppModal";
+import { LanguageSwitcher } from "./general-settings/LanguageChangeModal";
+import { PlazaSettings } from "./plaza-settings/PlazaSettingsModal";
+import { DeveloperOptions } from "./developer-options/DeveloperOptions";
+import { LinkedAccounts } from "./linked-accounts/LinkedAccounts";
+import { LinkWallet } from "features/wallet/components/LinkWallet";
+import { StreamsContent } from "features/game/components/modal/components/Streams";
+import { ReferralInfo } from "features/island/hud/components/referral/Referral";
+import { useSound } from "lib/utils/hooks/useSound";
+import { PickServer } from "./plaza-settings/PickServer";
+import { PlazaShaderSettings } from "./plaza-settings/PlazaShaderSettings";
+import { Preferences } from "./general-settings/Preferences";
+import { DEV_TimeMachine } from "./developer-options/DEV_TimeMachine";
+import { CONFIG } from "lib/config";
+import { createPortal } from "react-dom";
+import type { AuthMachineState } from "features/auth/lib/authMachine";
+import {
+  getSubscriptionsForFarmId,
+  type Subscriptions,
+} from "features/game/actions/subscriptions";
+import { preload } from "swr";
+import { useSelector } from "@xstate/react";
+import type { MachineState } from "features/game/lib/gameMachine";
+import { ReferralWidget } from "features/announcements/AnnouncementWidgets";
+import { AirdropPlayer } from "./general-settings/AirdropPlayer";
+import { DEV_PlayerSearch } from "./developer-options/DEV_PlayerSearch";
+import { DEV_ErrorSearch } from "./developer-options/DEV_ErrorSearch";
+import { ExperimentsSettings } from "./experiments-settings/ExperimentsSettings";
+import { BetaFeatures } from "./beta-features/BetaFeatures";
+import { EconomyEditorExperimentSettings } from "./experiments-settings/EconomyEditorExperimentSettings";
+import { InteriorExperimentSettings } from "./experiments-settings/InteriorExperimentSettings";
+import { LandscapingExperimentSettings } from "./experiments-settings/LandscapingExperimentSettings";
+import { ToolShopBuyAllExperimentSettings } from "./experiments-settings/ToolShopBuyAllExperimentSettings";
+import { StatsLeaderboardExperimentSettings } from "./experiments-settings/StatsLeaderboardExperimentSettings";
+import { AuctionCalendarExperimentSettings } from "./experiments-settings/AuctionCalendarExperimentSettings";
+import { FaceRecognitionSettings } from "features/retreat/components/personhood/FaceRecognition";
+import type { ContentComponentProps, SettingMenuId } from "./types";
+
+export type { ContentComponentProps, SettingMenuId };
+
+export const subscriptionsFetcher = ([, token, farmId]: [
+  string,
+  string,
+  number,
+]): Promise<Subscriptions> => {
+  return getSubscriptionsForFarmId(farmId, token);
+};
+
+const GameOptions: React.FC<ContentComponentProps> = ({ onSubMenuClick }) => {
+  const { gameService } = useContext(GameContext);
+
+  const { t } = useAppTranslation();
+
+  const [showFarm, setShowFarm] = useState(false);
+
+  const copypaste = useSound("copypaste");
+
+  const isPWA = useIsPWA();
+  const isWeb3MobileBrowser = isMobile && !!window.ethereum;
+  const pwaInstall = usePWAInstall();
+
+  const handleInstallApp = () => {
+    if (isMobile && !isWeb3MobileBrowser) {
+      if (isIOS && isSafari) {
+        pwaInstall.current?.showDialog();
+      } else if (isAndroid && isChrome) {
+        pwaInstall.current?.install();
+      }
+
+      fixInstallPromptTextStyles();
+    } else {
+      onSubMenuClick("installApp");
+    }
+  };
+
+  const farmId = useSelector(gameService, (state) => state.context.farmId);
+
+  const menuButtons: {
+    id: string;
+    content: React.ReactNode;
+    onClick: () => void;
+    disabled?: boolean;
+  }[] = [
+    {
+      id: "preferences",
+      content: <span>{t("gameOptions.generalSettings.preferences")}</span>,
+      onClick: () => onSubMenuClick("preferences"),
+    },
+    {
+      id: "plaza",
+      content: <span>{t("gameOptions.plazaSettings")}</span>,
+      onClick: () => onSubMenuClick("plaza"),
+    },
+    {
+      id: "account",
+      content: <span>{t("gameOptions.account")}</span>,
+      onClick: () => onSubMenuClick("account"),
+    },
+    {
+      id: "advanced",
+      content: <span>{t("gameOptions.advanced")}</span>,
+      onClick: () => onSubMenuClick("advanced"),
+    },
+    {
+      id: "about",
+      content: <span>{t("gameOptions.about")}</span>,
+      onClick: () => onSubMenuClick("about"),
+    },
+  ];
+
+  return (
+    <>
+      {/* Root menu */}
+      <>
+        <div className="flex flex-wrap items-center justify-between mx-2">
+          <Label
+            type="default"
+            icon={SUNNYSIDE.icons.search}
+            popup={showFarm}
+            className="mb-1 mr-4"
+            onClick={() => {
+              setShowFarm(true);
+              setTimeout(() => {
+                setShowFarm(false);
+              }, 2000);
+              copypaste.play();
+              clipboard.copy(farmId.toString());
+            }}
+          >
+            {t("gameOptions.farmId", { farmId })}
+          </Label>
+        </div>
+      </>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+        {menuButtons.map((button, index) => {
+          const isLast = index === menuButtons.length - 1;
+          const spanFull = isLast && menuButtons.length % 2 === 1;
+          return (
+            <Button
+              key={button.id}
+              onClick={button.onClick}
+              disabled={button.disabled}
+              className={`p-1 ${spanFull ? "col-span-1 sm:col-span-2" : ""}`}
+            >
+              {button.content}
+            </Button>
+          );
+        })}
+      </div>
+    </>
+  );
+};
+
+interface GameOptionsModalProps {
+  show: boolean;
+  onClose: () => void;
+}
+
+const _token = (state: AuthMachineState) =>
+  state.context.user.rawToken as string;
+
+const _farmId = (state: MachineState) => state.context.farmId;
+
+const preloadSubscriptions = async (token: string, farmId: number) => {
+  if (!CONFIG.API_URL) return;
+
+  preload(
+    ["/notifications/subscriptions", token, farmId],
+    subscriptionsFetcher,
+  );
+};
+
+// Keep the settings modal open while an unlink is mid-flight so the
+// machine can't get stranded in a hidden state.
+const _unlinkingSocial = (state: MachineState) =>
+  state.matches("unlinkingSocial") ||
+  state.matches("unlinkingSocialSuccess") ||
+  state.matches("unlinkingSocialFailed");
+const _linkingSocial = (state: MachineState) => state.matches("linkingSocial");
+const _linkingSocialSuccess = (state: MachineState) =>
+  state.matches("linkingSocialSuccess");
+const _linkingWallet = (state: MachineState) => state.matches("linkingWallet");
+const _linkingWalletSuccess = (state: MachineState) =>
+  state.matches("linkingWalletSuccess");
+
+export const GameOptionsModal: React.FC<GameOptionsModalProps> = ({
+  show,
+  onClose,
+}) => {
+  const { authService } = useContext(Auth.Context);
+
+  const token = useSelector(authService, _token);
+  const { gameService } = useContext(GameContext);
+  const farmId = useSelector(gameService, _farmId);
+  const [selected, setSelected] = useState<SettingMenuId>("main");
+  const [showTimeMachine, setShowTimeMachine] = useState(false);
+  const isLinkingSocial = useSelector(gameService, _linkingSocial);
+  const isLinkingSocialSuccess = useSelector(
+    gameService,
+    _linkingSocialSuccess,
+  );
+  const isLinkingWallet = useSelector(gameService, _linkingWallet);
+  const isLinkingWalletSuccess = useSelector(
+    gameService,
+    _linkingWalletSuccess,
+  );
+  const isUnlinkingSocial = useSelector(gameService, _unlinkingSocial);
+  const isLinkingInFlight =
+    isLinkingSocial ||
+    isLinkingSocialSuccess ||
+    isLinkingWallet ||
+    isLinkingWalletSuccess ||
+    isUnlinkingSocial;
+
+  useEffect(() => {
+    if (farmId) preloadSubscriptions(token, farmId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [farmId]);
+
+  const onHide = async () => {
+    onClose();
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setSelected("main");
+  };
+
+  const SelectedComponent = SETTING_MENUS[selected].content;
+
+  return (
+    <>
+      <Modal show={show} onHide={isLinkingInFlight ? undefined : onHide}>
+        <CloseButtonPanel
+          title={SETTING_MENUS[selected].title}
+          onBack={
+            !isLinkingInFlight && selected !== "main"
+              ? () => setSelected(SETTING_MENUS[selected].parent)
+              : undefined
+          }
+          onClose={isLinkingInFlight ? undefined : onHide}
+        >
+          <SelectedComponent
+            onSubMenuClick={setSelected}
+            onClose={onHide}
+            onTimeMachineToggle={() =>
+              setShowTimeMachine((visible) => !visible)
+            }
+          />
+        </CloseButtonPanel>
+        <ReferralWidget />
+      </Modal>
+      {CONFIG.NETWORK === "amoy" &&
+        showTimeMachine &&
+        createPortal(
+          <DEV_TimeMachine onClose={() => setShowTimeMachine(false)} />,
+          document.body,
+        )}
+    </>
+  );
+};
+
+interface SettingMenu {
+  title: string;
+  parent: SettingMenuId;
+  content: React.FC<ContentComponentProps>;
+}
+
+export const SETTING_MENUS: Record<SettingMenuId, SettingMenu> = {
+  // Game Options
+  main: {
+    title: translate("gameOptions.title"),
+    parent: "main",
+    content: GameOptions,
+  },
+  installApp: {
+    title: translate("install.app"),
+    parent: "main",
+    content: InstallAppModal,
+  },
+  account: {
+    title: translate("gameOptions.account"),
+    parent: "main",
+    content: Account,
+  },
+  referAFriend: {
+    title: translate("gameOptions.account.referFriend"),
+    parent: "account",
+    content: ReferralInfo,
+  },
+  advanced: {
+    title: translate("gameOptions.advanced"),
+    parent: "main",
+    content: Advanced,
+  },
+  about: {
+    title: translate("gameOptions.about"),
+    parent: "main",
+    content: About,
+  },
+  streams: {
+    title: translate("streams.title"),
+    parent: "about",
+    content: StreamsContent,
+  },
+  amoy: {
+    title: translate("gameOptions.developerOptions"),
+    parent: "advanced",
+    content: DeveloperOptions,
+  },
+  blockchain: {
+    title: translate("gameOptions.blockchainSettings"),
+    parent: "advanced",
+    content: BlockchainSettings,
+  },
+  linkedAccounts: {
+    title: translate("linkedAccounts.title"),
+    parent: "account",
+    content: LinkedAccounts,
+  },
+  linkAccountWallet: {
+    title: translate("linkedAccounts.linkWallet"),
+    parent: "linkedAccounts",
+    content: LinkWallet,
+  },
+  plaza: {
+    title: translate("gameOptions.plazaSettings"),
+    parent: "main",
+    content: PlazaSettings,
+  },
+  experiments: {
+    title: "Experiments",
+    parent: "advanced",
+    content: ExperimentsSettings,
+  },
+  economyEditor: {
+    title: translate("gameOptions.experiments.economyEditor"),
+    parent: "experiments",
+    content: EconomyEditorExperimentSettings,
+  },
+  interiorExperiment: {
+    title: translate("gameOptions.experiments.interiors"),
+    parent: "experiments",
+    content: InteriorExperimentSettings,
+  },
+  landscapingExperiment: {
+    title: translate("gameOptions.experiments.landscaping"),
+    parent: "experiments",
+    content: LandscapingExperimentSettings,
+  },
+  toolShopBuyAll: {
+    title: translate("gameOptions.experiments.toolShopBuyAll"),
+    parent: "experiments",
+    content: ToolShopBuyAllExperimentSettings,
+  },
+  statsLeaderboard: {
+    title: translate("gameOptions.experiments.statsLeaderboard"),
+    parent: "experiments",
+    content: StatsLeaderboardExperimentSettings,
+  },
+  auctionCalendar: {
+    title: translate("gameOptions.experiments.auctionCalendar"),
+    parent: "experiments",
+    content: AuctionCalendarExperimentSettings,
+  },
+  betaFeatures: {
+    title: translate("gameOptions.betaFeatures"),
+    parent: "advanced",
+    content: BetaFeatures,
+  },
+  // Account
+  faceRecognition: {
+    title: translate("gameOptions.faceRecognition"),
+    parent: "account",
+    content: FaceRecognitionSettings,
+  },
+  // Preferences hub + leaves
+  preferences: {
+    title: translate("gameOptions.generalSettings.preferences"),
+    parent: "main",
+    content: Preferences,
+  },
+  appearance: {
+    title: translate("gameOptions.generalSettings.appearance"),
+    parent: "preferences",
+    content: () => <AppearanceSettings />,
+  },
+  behaviour: {
+    title: translate("gameOptions.generalSettings.behaviour"),
+    parent: "preferences",
+    content: () => <BehaviourSettings />,
+  },
+  audio: {
+    title: translate("gameOptions.generalSettings.audio"),
+    parent: "preferences",
+    content: AudioSettings,
+  },
+  changeLanguage: {
+    title: translate("gameOptions.generalSettings.changeLanguage"),
+    parent: "preferences",
+    content: LanguageSwitcher,
+  },
+  notifications: {
+    title: translate("gameOptions.generalSettings.notifications"),
+    parent: "preferences",
+    content: Notifications,
+  },
+
+  // Developer Options
+  admin: { title: `Airdrop Player`, parent: "amoy", content: AirdropPlayer },
+  playerSearch: {
+    title: "Player Search (DEV)",
+    parent: "amoy",
+    content: (props) => <DEV_PlayerSearch {...props} />,
+  },
+  errorSearch: {
+    title: "Error Search (DEV)",
+    parent: "amoy",
+    content: (props) => <DEV_ErrorSearch {...props} />,
+  },
+  // Plaza Settings
+  pickServer: {
+    title: translate("gameOptions.plazaSettings.pickServer"),
+    parent: "plaza",
+    content: PickServer,
+  },
+  shader: {
+    title: translate("gameOptions.plazaSettings.shader"),
+    parent: "plaza",
+    content: PlazaShaderSettings,
+  },
+};

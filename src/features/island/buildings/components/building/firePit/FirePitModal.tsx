@@ -1,0 +1,191 @@
+import React, { useCallback, useContext, useMemo, useState } from "react";
+
+import { Modal } from "components/ui/Modal";
+
+import chefHat from "assets/icons/chef_hat.png";
+
+import { Recipes } from "../Recipes";
+import {
+  type Cookable,
+  type CookableName,
+  FIRE_PIT_COOKABLES,
+  isFishCookable,
+  isTruffleRecipe,
+} from "features/game/types/consumables";
+import { CloseButtonPanel } from "features/game/components/CloseablePanel";
+import { OuterPanel } from "components/ui/Panel";
+import { NPC_WEARABLES } from "lib/npcs";
+import type { BuildingProduct } from "features/game/types/game";
+import { getCurrentChapter } from "features/game/types/chapters";
+import { hasFeatureAccess } from "lib/flags";
+import { useNow } from "lib/utils/hooks/useNow";
+import {
+  CHAPTER_CROP_WEEK,
+  CHAPTER_CROP_WEEK_RECIPE,
+  hasChapterCropWeekAccess,
+  isRetiredChapterCropWeekItem,
+} from "features/game/types/chapterCropWeek";
+import { Context } from "features/game/GameProvider";
+import { getCookingRequirements } from "features/game/events/landExpansion/cook";
+import type { InventoryItemName } from "features/game/types/game";
+import { needsFirstCook, TUTORIAL_RECIPE } from "./lib/onboarding";
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  onCook: (name: CookableName) => void;
+  cooking?: BuildingProduct;
+  itemInProgress?: CookableName;
+  buildingId: string;
+  readyRecipes: BuildingProduct[];
+  queue: BuildingProduct[];
+}
+export const FirePitModal: React.FC<Props> = ({
+  isOpen,
+  onCook,
+  onClose,
+  cooking,
+  itemInProgress,
+  buildingId,
+  queue,
+  readyRecipes,
+}) => {
+  const { gameService } = useContext(Context);
+  const now = useNow({
+    live: true,
+    autoEndAt: CHAPTER_CROP_WEEK.endDate.getTime(),
+  });
+
+  const getGame = useCallback(() => {
+    return gameService.getSnapshot().context.state;
+  }, [gameService]);
+
+  const firePitRecipes = useMemo(() => {
+    return Object.values(FIRE_PIT_COOKABLES)
+      .filter((recipe) => {
+        // Recipes from previous Chapter Crop Week runs never come back
+        if (isRetiredChapterCropWeekItem(recipe.name)) return false;
+
+        // Chapter Crop Week event recipe only appears while the event is active
+        // (admin testers get early access)
+        if (recipe.name === CHAPTER_CROP_WEEK_RECIPE) {
+          return hasChapterCropWeekAccess(getGame(), now);
+        }
+
+        // Truffle recipes ride on the Pigs' flag (Truffle only exists behind it)
+        if (isTruffleRecipe(recipe.name)) {
+          return hasFeatureAccess(getGame(), "PIGPEN");
+        }
+
+        if (getCurrentChapter(now) === "Paw Prints") return true;
+
+        return !isFishCookable(recipe.name);
+      })
+      .sort(
+        (a, b) => a.experience - b.experience, // "Lowest entry" == first in this order
+      );
+  }, [now, getGame]);
+
+  /**
+   * Stored selection is intentionally session-only (component state).
+   * If no selection exists yet (first open this session), choose the first recipe
+   * the player can currently cook; otherwise default to the first entry.
+   */
+  const getDefaultSelection = useCallback((): Cookable | undefined => {
+    const game = getGame();
+
+    const inProgress = firePitRecipes.find(
+      (recipe) => recipe.name === itemInProgress,
+    );
+    if (inProgress) return inProgress;
+
+    // Tutorial: open a new player straight onto their first meal.
+    if (needsFirstCook(game)) {
+      const tutorialRecipe = firePitRecipes.find(
+        (recipe) => recipe.name === TUTORIAL_RECIPE,
+      );
+      if (tutorialRecipe) return tutorialRecipe;
+    }
+
+    const canCook = (recipe: Cookable) => {
+      const requirements = getCookingRequirements({
+        state: game,
+        item: recipe.name,
+      });
+
+      return !Object.entries(requirements).some(([name, amount]) =>
+        amount.greaterThan(game.inventory[name as InventoryItemName] ?? 0),
+      );
+    };
+
+    return firePitRecipes.find(canCook) ?? firePitRecipes[0];
+  }, [firePitRecipes, getGame, itemInProgress]);
+
+  const [selected, setSelected] = useState<Cookable | undefined>(undefined);
+  // This modal stays mounted between opens, so a recipe tapped on an earlier
+  // visit would otherwise still be selected when the first-cook tutorial
+  // starts. Only a choice made during the tutorial is allowed to override it.
+  const [selectedDuringFirstCook, setSelectedDuringFirstCook] = useState(false);
+
+  const setSelectedCookable = useCallback<
+    React.Dispatch<React.SetStateAction<Cookable>>
+  >(
+    (next) => {
+      setSelectedDuringFirstCook(needsFirstCook(getGame()));
+      setSelected((prev) => {
+        const fallback = getDefaultSelection() ?? firePitRecipes[0];
+        const current = prev ?? fallback;
+
+        return typeof next === "function" ? next(current) : next;
+      });
+    },
+    [firePitRecipes, getDefaultSelection, getGame],
+  );
+
+  const effectiveSelected = useMemo(() => {
+    if (!firePitRecipes.length) return undefined;
+
+    const isValidSelection =
+      !!selected && firePitRecipes.some((r) => r.name === selected.name);
+    const isStaleForFirstCook =
+      isOpen && needsFirstCook(getGame()) && !selectedDuringFirstCook;
+
+    if (isValidSelection && !isStaleForFirstCook) return selected;
+    if (!isOpen) return selected; // don't "select" while closed
+
+    return getDefaultSelection();
+  }, [
+    firePitRecipes,
+    getDefaultSelection,
+    getGame,
+    isOpen,
+    selected,
+    selectedDuringFirstCook,
+  ]);
+
+  return (
+    <Modal show={isOpen} onHide={onClose}>
+      <CloseButtonPanel
+        tabs={[{ id: "firePit", icon: chefHat, name: "Fire Pit" }]}
+        onClose={onClose}
+        bumpkinParts={NPC_WEARABLES.bruce}
+        container={OuterPanel}
+      >
+        {!!effectiveSelected && (
+          <Recipes
+            selected={effectiveSelected}
+            setSelected={setSelectedCookable}
+            recipes={firePitRecipes}
+            onCook={onCook}
+            onClose={onClose}
+            cooking={cooking}
+            buildingName="Fire Pit"
+            buildingId={buildingId}
+            queue={queue}
+            readyRecipes={readyRecipes}
+          />
+        )}
+      </CloseButtonPanel>
+    </Modal>
+  );
+};

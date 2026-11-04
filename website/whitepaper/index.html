@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Playra Economy Design Document | Game Progression and Future Considerations</title>
+  <meta name="description"
+    content="Official Playra economy design document covering gameplay progression, resource systems, seasonal content, and future economy principles." />
+  <link rel="icon" type="image/png" href="/tab_icon.png?v=6" />
+  <link rel="shortcut icon" href="/favicon.ico?v=6" />
+  <link rel="apple-touch-icon" href="/tab_icon.png?v=6" />
+
+  <!-- Google Fonts Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    /* Custom Dark Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #334155 #0f172a;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-body: #111418;
+      --bg-sidebar: #111418;
+      --bg-header: rgba(17, 20, 24, 0.95);
+      --bg-card: #181c22;
+      --bg-card-subtle: #14171d;
+      --bg-active: #202632;
+      --bg-hover: #191e27;
+      --border-color: #212732;
+      --border-subtle: #1a1f28;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-green: #22c55e;
+      --accent-blue: #3b82f6;
+      --accent-blue-hover: #2563eb;
+      --accent-yellow: #f59e0b;
+    }
+
+    html.light {
+      --bg-body: #ffffff;
+      --bg-sidebar: #f8fafc;
+      --bg-header: rgba(255, 255, 255, 0.95);
+      --bg-card: #f1f5f9;
+      --bg-card-subtle: #f8fafc;
+      --bg-active: #e2e8f0;
+      --bg-hover: #f1f5f9;
+      --border-color: #e2e8f0;
+      --border-subtle: #edf2f7;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-body);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.72;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* GitBook Header */
+    .gb-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: 64px;
+      background: var(--bg-header);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+    }
+
+    .gb-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .gb-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 17.5px;
+      letter-spacing: -0.02em;
+    }
+
+    .gb-brand-logo {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      min-height: 36px;
+      flex-shrink: 0;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+    }
+
+    .gb-header-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .gb-search-btn {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 6px 14px;
+      color: var(--text-muted);
+      font-size: 13.5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .gb-search-btn:hover {
+      border-color: #3b82f6;
+      color: var(--text-secondary);
+    }
+
+    .gb-search-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .gb-kbd-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .gb-kbd {
+      background: var(--bg-active);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-family: inherit;
+      color: var(--text-secondary);
+    }
+
+    .gb-nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      padding: 6px 10px;
+      border-radius: 6px;
+      transition: color 0.15s ease;
+    }
+
+    .gb-nav-link:hover {
+      color: var(--text-primary);
+    }
+
+    .gb-btn-play {
+      background: #2563eb;
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: background 0.15s ease;
+    }
+
+    .gb-btn-play:hover {
+      background: #1d4ed8;
+    }
+
+    /* Layout Structure */
+    .gb-layout {
+      display: flex;
+      min-height: calc(100vh - 64px);
+      max-width: 1560px;
+      margin: 0 auto;
+    }
+
+    /* Left Sidebar */
+    .gb-sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border-color);
+      background: var(--bg-sidebar);
+      padding: 24px 14px 24px 18px;
+      overflow-y: auto;
+      height: calc(100vh - 64px);
+      position: sticky;
+      top: 64px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .gb-nav-group {
+      margin-bottom: 22px;
+    }
+
+    .gb-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      padding: 6px 10px;
+      margin-bottom: 4px;
+    }
+
+    .gb-nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7.5px 12px;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: all 0.12s ease;
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 2px;
+    }
+
+    .gb-nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .gb-nav-item.active {
+      background: var(--bg-active);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .gb-nav-item-left {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .gb-nav-icon {
+      font-size: 14px;
+      width: 18px;
+      text-align: center;
+    }
+
+    .gb-chevron {
+      font-size: 11px;
+      color: var(--text-muted);
+      transition: transform 0.15s;
+    }
+
+    /* Main Article Column */
+    .gb-main {
+      flex: 1;
+      min-width: 0;
+      padding: 36px 54px 90px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .gb-article-inner {
+      width: 100%;
+      max-width: 820px;
+    }
+
+    .gb-breadcrumb {
+      font-size: 13px;
+      color: #60a5fa;
+      margin-bottom: 16px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .gb-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .gb-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .gb-title-icon {
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .gb-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.025em;
+      margin: 0;
+      line-height: 1.25;
+    }
+
+    .gb-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 6px 13px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      font-weight: 500;
+    }
+
+    .gb-copy-btn:hover {
+      background: var(--bg-active);
+      color: var(--text-primary);
+      border-color: #3b82f6;
+    }
+
+    /* Content Typography */
+    .gb-content p {
+      font-size: 15.5px;
+      line-height: 1.75;
+      color: var(--text-secondary);
+      margin-bottom: 18px;
+    }
+
+    .gb-content p strong {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    .gb-content ul,
+    .gb-content ol {
+      color: var(--text-secondary);
+      font-size: 15px;
+      line-height: 1.7;
+      padding-left: 24px;
+      margin-bottom: 20px;
+    }
+
+    .gb-content li {
+      margin-bottom: 8px;
+    }
+
+    .gb-content li strong {
+      color: var(--text-primary);
+    }
+
+    /* Callouts & Highlights */
+    .gb-callout-green {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-top: 24px;
+      margin-bottom: 26px;
+    }
+
+    .gb-callout-icon {
+      color: #22c55e;
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .gb-callout-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #cbd5e1;
+      margin: 0;
+    }
+
+    /* Metric Cards */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin: 24px 0;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px 14px;
+      text-align: center;
+    }
+
+    .metric-val {
+      font-size: 22px;
+      font-weight: 800;
+      color: #f59e0b;
+      line-height: 1.2;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* Feature Cards */
+    .gb-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .gb-feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 18px 20px;
+    }
+
+    .gb-feature-card h3 {
+      margin: 0 0 8px 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .gb-feature-card p {
+      font-size: 13.5px;
+      margin: 0;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    /* Tables */
+    .gb-table-wrapper {
+      overflow-x: auto;
+      margin: 22px 0;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .gb-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+
+    .gb-table th,
+    .gb-table td {
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .gb-table th {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .gb-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .gb-table tr:nth-child(even) td {
+      background: var(--bg-card-subtle);
+    }
+
+    .code-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: var(--bg-active);
+      border: 1px solid var(--border-color);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #38bdf8;
+    }
+
+    /* Step List */
+    .step-list {
+      list-style: none;
+      padding: 0;
+      margin: 24px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .step-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 18px 22px;
+    }
+
+    .step-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .step-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* CTA Card */
+    .gb-cta-card {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(16, 185, 129, 0.12));
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      border-radius: 12px;
+      padding: 32px 28px;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .gb-cta-card h3 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin: 0 0 10px 0;
+    }
+
+    .gb-cta-card p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 580px;
+      margin: 0 auto 22px auto;
+      line-height: 1.6;
+    }
+
+    /* Right Rail */
+    .gb-right-rail {
+      width: 240px;
+      flex-shrink: 0;
+      padding: 36px 20px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-left: 1px solid var(--border-color);
+      height: calc(100vh - 64px);
+      position: sticky;
+      top: 64px;
+    }
+
+    .gb-right-top {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .gb-toc-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .gb-toc-link {
+      display: block;
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 5px 0;
+      line-height: 1.4;
+      transition: color 0.12s ease;
+      cursor: pointer;
+    }
+
+    .gb-toc-link:hover,
+    .gb-toc-link.active {
+      color: #3b82f6;
+      font-weight: 500;
+    }
+
+    .gb-theme-toggle {
+      display: flex;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 9999px;
+      padding: 4px;
+      gap: 2px;
+      align-self: flex-start;
+    }
+
+    .gb-theme-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+
+    .gb-theme-btn.active {
+      background: var(--bg-active);
+      color: var(--text-primary);
+    }
+
+    /* Sections */
+    .doc-section {
+      display: none;
+      animation: fadeIn 0.16s ease-out;
+    }
+
+    .doc-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(3px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Search Modal */
+    .gb-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 100px;
+    }
+
+    .gb-modal-overlay.open {
+      display: flex;
+    }
+
+    .gb-search-modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 580px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+
+    .gb-search-input-box {
+      display: flex;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-color);
+      gap: 12px;
+    }
+
+    .gb-search-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 15px;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    .gb-search-results {
+      max-height: 340px;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .gb-search-result-item {
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .gb-search-result-item:hover {
+      background: var(--bg-active);
+    }
+
+    .gb-search-res-title {
+      font-weight: 600;
+      font-size: 13.5px;
+      color: var(--text-primary);
+    }
+
+    .gb-search-res-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    @media (max-width: 1140px) {
+      .gb-right-rail {
+        display: none;
+      }
+    }
+
+    @media (max-width: 860px) {
+      html,
+      body {
+        overflow-x: hidden;
+      }
+
+      .mobile-menu-btn {
+        display: block;
+      }
+      .gb-header-right {
+        display: none;
+      }
+
+      .gb-sidebar {
+        position: fixed;
+        left: -290px;
+        top: 64px;
+        z-index: 45;
+        transition: left 0.25s ease;
+        background: #111418;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.7);
+      }
+
+      .gb-sidebar.open {
+        left: 0;
+      }
+
+      .gb-main {
+        padding: 24px 20px 60px 20px;
+      }
+
+      .metric-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .gb-grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Top Header -->
+  <header class="gb-header">
+    <div class="gb-header-left">
+      <button class="mobile-menu-btn" id="mobile-toggle" aria-label="Toggle Menu"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <a href="/" class="gb-brand">
+        <img src="/assets/token.png" alt="Playra" class="gb-brand-logo" />
+        <span>Playra</span>
+      </a>
+    </div>
+
+    <div class="gb-header-right">
+      <!-- Search Trigger -->
+      <div class="gb-search-btn" id="search-trigger">
+        <div class="gb-search-left">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span>Search whitepaper...</span>
+        </div>
+        <div class="gb-kbd-group">
+          <kbd class="gb-kbd">Ctrl</kbd>
+          <kbd class="gb-kbd">K</kbd>
+        </div>
+      </div>
+
+      <a href="/docs/" class="gb-nav-link">Docs</a>
+      <a href="/waitlist/" class="gb-btn-play">Join Waitlist</a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="gb-layout">
+    <!-- Left Sidebar -->
+    <aside class="gb-sidebar" id="sidebar">
+      <!-- OVERVIEW & VISION -->
+      <div class="gb-nav-group">
+        <div class="gb-group-title">OVERVIEW & VISION</div>
+        <a class="gb-nav-item active" data-target="vision">
+          <div class="gb-nav-item-left">
+            <span class="gb-nav-icon">•</span>
+            <span>Executive Summary</span>
+          </div>
+          <span class="gb-chevron">›</span>
+        </a>
+        <a class="gb-nav-item" data-target="tokenomics">
+          <div class="gb-nav-item-left">
+            <span class="gb-nav-icon">•</span>
+            <span>Future Economy Consideration</span>
+          </div>
+          <span class="gb-chevron">›</span>
+        </a>
+        <a class="gb-nav-item" data-target="season-pool">
+          <div class="gb-nav-item-left">
+            <span class="gb-nav-icon">•</span>
+            <span>Seasonal Gameplay</span>
+          </div>
+          <span class="gb-chevron">›</span>
+        </a>
+      </div>
+
+      <!-- GAMEPLAY MECHANICS -->
+      <div class="gb-nav-group">
+        <div class="gb-group-title">GAMEPLAY MECHANICS</div>
+        <a class="gb-nav-item" data-target="farming-loop">
+          <div class="gb-nav-item-left">
+            <span class="gb-nav-icon">•</span>
+            <span>Core Farming Loop</span>
+          </div>
+          <span class="gb-chevron">›</span>
+        </a>
+        <a class="gb-nav-item" data-target="crop-tiers">
+          <div class="gb-nav-item-left">
+            <span class="gb-nav-icon">•</span>
+            <span>Crop Schedules & Economy</span>
+          </div>
+          <span class="gb-chevron">›</span>
+        </a>
+        <a class="gb-nav-item" data-target="kitchen-bakery">
+          <div class="gb-nav-item-left">
+            <span class="gb-nav-icon">•</span>
+            <span>Kitchen & Processing</span>
+          </div>
+          <span class="gb-chevron">›</span>
+        </a>
+        <a class="gb-nav-item" data-target="animals">
+          <div class="gb-nav-item-left">
+            <span class="gb-nav-icon">•</span>
+            <span>Livestock</span>
+          </div>
+          <span class="gb-chevron">›</span>
+        </a>
+        <a class="gb-nav-item" data-target="gathering-expansion">
+          <div class="gb-nav-item-left">
+            <span class="gb-nav-icon">•</span>
+            <span>Mining & Land Expansions</span>
+          </div>
+          <span class="gb-chevron">›</span>
+        </a>
+      </div>
+
+      <!-- ECONOMY & SECURITY -->
+      <div class="gb-nav-group">
+        <div class="gb-group-title">ECONOMY & SECURITY</div>
+        <a class="gb-nav-item" data-target="deflation-sinks">
+          <div class="gb-nav-item-left">
+            <span class="gb-nav-icon">•</span>
+            <span>Future Economy Design</span>
+          </div>
+          <span class="gb-chevron">›</span>
+        </a>
+        <a class="gb-nav-item" data-target="security-audits">
+          <div class="gb-nav-item-left">
+            <span class="gb-nav-icon">•</span>
+            <span>Security & Fair Play</span>
+          </div>
+          <span class="gb-chevron">›</span>
+        </a>
+        <a class="gb-nav-item" data-target="faq">
+          <div class="gb-nav-item-left">
+            <span class="gb-nav-icon">•</span>
+            <span>Frequently Asked Questions</span>
+          </div>
+          <span class="gb-chevron">›</span>
+        </a>
+      </div>
+
+      <!-- Theme Toggle at bottom of left sidebar -->
+      <div class="gb-sidebar-footer" style="margin-top: auto; padding-top: 18px; border-top: 1px solid var(--border-color); padding-left: 6px;">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px;">Theme</div>
+        <div class="gb-theme-toggle">
+          <button class="gb-theme-btn" id="btn-theme-light" title="Light mode"><svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg></button>
+          <button class="gb-theme-btn active" id="btn-theme-dark" title="Dark mode"><svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg></button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Article Column -->
+    <main class="gb-main">
+      <div class="gb-article-inner">
+
+        <!-- 1. EXECUTIVE SUMMARY -->
+        <section id="sec-vision" class="doc-section active">
+          <div class="gb-breadcrumb">Whitepaper &gt; Executive Summary</div>
+          <div class="gb-top-row">
+            <div class="gb-title-group">
+              
+              <h1 class="gb-title">Executive Summary</h1>
+            </div>
+            <button class="gb-copy-btn" id="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span id="copy-text">Copy link</span>
+            </button>
+          </div>
+          <div class="gb-content">
+            <p>
+              <strong>Playra</strong> is a browser farming game focused on meaningful progression. Players grow crops,
+              raise animals, fish, craft resources, complete quests, and build their farms over time.
+            </p>
+
+            <div class="gb-callout-green">
+              <div class="gb-callout-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+              <div class="gb-callout-text">
+                <strong>Economy Principle: Build Stability Before Token Decisions</strong><br />
+                Playra is currently prioritizing a balanced, understandable in-game economy. PYRA is future consideration only:
+                there is no confirmed launch date, contract, network, trading venue, allocation, or financial return.
+              </div>
+            </div>
+
+            <div class="metric-grid">
+              <div class="metric-card">
+                <div class="metric-val">Gameplay first</div>
+                <div class="metric-label">Future Consideration</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-val">Stable Economy</div>
+                <div class="metric-label">Current Priority</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-val">In Development</div>
+                <div class="metric-label">Economy Systems</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-val">Free</div>
+                <div class="metric-label">Barrier to Entry</div>
+              </div>
+            </div>
+
+            <p>
+              Playra is a browser farming game focused on long-term progression, balanced resources, and enjoyable seasonal play. External assets are not required to play, and any future economy initiative will be introduced only after stability is demonstrated.
+            </p>
+          </div>
+        </section>
+
+        <!-- 2. FUTURE ECONOMY CONSIDERATION -->
+        <section id="sec-tokenomics" class="doc-section">
+          <div class="gb-breadcrumb">Whitepaper &gt; Future Economy Consideration</div>
+          <div class="gb-top-row">
+            <div class="gb-title-group">
+              
+              <h1 class="gb-title">Future Economy Consideration</h1>
+            </div>
+          </div>
+          <div class="gb-content">
+            <p>
+              Playra's current economy consists of gameplay progression and in-game resources. PYRA is only a future consideration and has not launched.
+            </p>
+
+            <div class="gb-grid-2">
+              <div class="gb-feature-card">
+                <h3>Gameplay Resources</h3>
+                <p>Seeds, tools, and upgrades are balanced as in-game progression resources, with no external asset requirement.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Stable Progression</h3>
+                <p>Land and crafting progression will remain understandable and achievable through gameplay.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Tool Crafting</h3>
+                <p>Crafting systems may consume gameplay materials and should provide meaningful utility without external payments.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>No Active Reward Pool</h3>
+                <p>No daily token pool, token distribution, staking reward, or external value distribution is active.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. SEASONAL GAMEPLAY -->
+        <section id="sec-season-pool" class="doc-section">
+          <div class="gb-breadcrumb">Whitepaper &gt; Seasonal Gameplay</div>
+          <div class="gb-top-row">
+            <div class="gb-title-group">
+              
+              <h1 class="gb-title">Seasonal Gameplay Model</h1>
+            </div>
+          </div>
+          <div class="gb-content">
+            <p>
+              Seasons provide shared goals, limited-time activities, leaderboards, and rotating cosmetic or gameplay content. No external token reward is implied:
+            </p>
+
+            <div class="step-list">
+              <div class="step-item">
+                <div class="step-title">1. Seasonal Objectives</div>
+                <div class="step-desc">Players complete farming, crafting, and event activities that support balanced progression and community participation.</div>
+              </div>
+              <div class="step-item">
+                <div class="step-title">2. Farming Points</div>
+                <div class="step-desc">Gameplay activity contributes to in-game season progress. Progress is recorded server-side for a fair experience.</div>
+              </div>
+              <div class="step-item">
+                <div class="step-title">3. Season Rewards</div>
+                <div class="step-desc">Available rewards will be listed before each season. Any external asset is outside the current scope and is never implied by participation.</div>
+              </div>
+              <div class="step-item">
+                <div class="step-title">4. Seasonal Review</div>
+                <div class="step-desc">The team evaluates season duration, difficulty, participation, and fairness before announcing subsequent seasons.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. CORE FARMING LOOP -->
+        <section id="sec-farming-loop" class="doc-section">
+          <div class="gb-breadcrumb">Whitepaper &gt; Core Farming Loop</div>
+          <div class="gb-top-row">
+            <div class="gb-title-group">
+              
+              <h1 class="gb-title">The Core Farming Loop</h1>
+            </div>
+          </div>
+          <div class="gb-content">
+            <div class="gb-callout-green">
+              <div class="gb-callout-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h4m-2-2v4m7-2h.01m3 0h.01"></path></svg></div>
+              <div class="gb-callout-text">
+                <strong>Instant Playability:</strong> Click to plant, wait for the growth timer, click to harvest. No complex blockchain transaction approvals needed for each click. Gameplay is fast, responsive, and casual-friendly.
+              </div>
+            </div>
+
+            <div class="gb-grid-2">
+              <div class="gb-feature-card">
+                <h3>1. Plant Seeds</h3>
+                <p>Choose your crop strategy based on growth time, resource availability, and active session length.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>2. Water & Care</h3>
+                <p>Keep soil watered to maximize growth speed. Upgrade to Sprinklers for passive cultivation.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>3. Harvest & Sell</h3>
+                <p>Harvest mature crops and receive their gameplay resources, with applicable season objectives updated automatically.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>4. Expand & Reinvest</h3>
+                <p>Use earned gameplay resources to expand your farm, improve recipes, and unlock new areas.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. CROP SCHEDULES & ECONOMY -->
+        <section id="sec-crop-tiers" class="doc-section">
+          <div class="gb-breadcrumb">Whitepaper &gt; Crop Schedules</div>
+          <div class="gb-top-row">
+            <div class="gb-title-group">
+              
+              <h1 class="gb-title">Crop Schedules & Economy Table</h1>
+            </div>
+          </div>
+          <div class="gb-content">
+            <p>
+              Authentic in-game crops, growth cycles, seed costs, and token sell values:
+            </p>
+
+            <div class="gb-table-wrapper">
+              <table class="gb-table">
+                <thead>
+                  <tr>
+                    <th>Crop</th>
+                    <th>Base Duration</th>
+                    <th>Planned Schedule</th>
+                    <th>Gameplay Use</th>
+                    <th>Farming Role</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Sunflower</td>
+                    <td>1 Minute</td>
+                    <td>Active / idle</td>
+                    <td>Early leveling</td>
+                    <td>Fast cashflow & early leveling</td>
+                  </tr>
+                  <tr>
+                    <td>Potato</td>
+                    <td>5 Minutes</td>
+                    <td>Active / idle</td>
+                    <td>Kitchen staple</td>
+                    <td>Kitchen staple & soups</td>
+                  </tr>
+                  <tr>
+                    <td>Pumpkin</td>
+                    <td>30 Minutes</td>
+                    <td>Active / idle</td>
+                    <td>Cooking recipes</td>
+                    <td>Cooking & kitchen recipes</td>
+                  </tr>
+                  <tr>
+                    <td>Carrot</td>
+                    <td>1 Hour</td>
+                    <td>Flexible</td>
+                    <td>Daily delivery</td>
+                    <td>Farmer food & daily deliveries</td>
+                  </tr>
+                  <tr>
+                    <td>Cabbage</td>
+                    <td>2 Hours</td>
+                    <td>Flexible</td>
+                    <td>High-yield farming</td>
+                    <td>High yield farming & salads</td>
+                  </tr>
+                  <tr>
+                    <td>Soybean</td>
+                    <td>3 Hours</td>
+                    <td>Flexible</td>
+                    <td>Processing</td>
+                    <td>Processing & crafting</td>
+                  </tr>
+                  <tr>
+                    <td>Beetroot</td>
+                    <td>4 Hours</td>
+                    <td>Overnight</td>
+                    <td>Recipe ingredient</td>
+                    <td>Beetroot Blaze & deli recipes</td>
+                  </tr>
+                  <tr>
+                    <td>Cauliflower</td>
+                    <td>8 Hours</td>
+                    <td>Overnight</td>
+                    <td>Mid-tier cooking</td>
+                    <td>Cauliflower Burger & mid-tier cooking</td>
+                  </tr>
+                  <tr>
+                    <td>Parsnip</td>
+                    <td>12 Hours</td>
+                    <td>Overnight</td>
+                    <td>Overnight farming</td>
+                    <td>Half-day passive yield</td>
+                  </tr>
+                  <tr>
+                    <td>Eggplant</td>
+                    <td>16 Hours</td>
+                    <td>Overnight</td>
+                    <td>High-tier cooking</td>
+                    <td>High-tier cooking & expansions</td>
+                  </tr>
+                  <tr>
+                    <td>Corn</td>
+                    <td>20 Hours</td>
+                    <td>Overnight</td>
+                    <td>Animal nutrition</td>
+                    <td>Popcorn & animal nutrition</td>
+                  </tr>
+                  <tr>
+                    <td>Wheat</td>
+                    <td>24 Hours</td>
+                    <td>Long duration</td>
+                    <td>Flour and feed</td>
+                    <td>Chicken feed, flour, pancakes & cakes</td>
+                  </tr>
+                  <tr>
+                    <td>Kale</td>
+                    <td>36 Hours</td>
+                    <td>Long duration</td>
+                    <td>Long-duration crop</td>
+                    <td>Maximum single-crop harvest return</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. KITCHEN & PROCESSING -->
+        <section id="sec-kitchen-bakery" class="doc-section">
+          <div class="gb-breadcrumb">Whitepaper &gt; Kitchen & Bakery: Value-Add Processing</div>
+          <div class="gb-top-row">
+            <div class="gb-title-group">
+              
+              <h1 class="gb-title">Kitchen & Bakery: Value-Add Processing</h1>
+            </div>
+          </div>
+          <div class="gb-content">
+            <p>
+              To improve farm progression, players use the <strong>Fire Pit, Kitchen & Bakery</strong>. Turn raw crops into useful meals and gain in-game crafting experience:
+            </p>
+
+            <div class="gb-grid-2">
+              <div class="gb-feature-card">
+                <h3>Pumpkin Soup</h3>
+                <p><strong>Recipe:</strong> 5x Pumpkin.<br /><strong>Benefit:</strong> Adds useful gameplay value and provides early Farmer XP.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Mashed Potato</h3>
+                <p><strong>Recipe:</strong> 10x Potato.<br /><strong>Reward:</strong> Fast-cooking nutritious staple meal to boost Farmer leveling.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Golden Pancakes</h3>
+                <p><strong>Recipe:</strong> Wheat + Honey / Eggs.<br /><strong>Reward:</strong> High-tier gourmet breakfast granting massive XP boosts.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Carrot Cake</h3>
+                <p><strong>Recipe:</strong> Carrot + Flour + Eggs.<br /><strong>Reward:</strong> Premium confectionery item granting maximum Farmer satisfaction.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. LIVESTOCK -->
+        <section id="sec-animals" class="doc-section">
+          <div class="gb-breadcrumb">Whitepaper &gt; Livestock & Animal Husbandry</div>
+          <div class="gb-top-row">
+            <div class="gb-title-group">
+              
+              <h1 class="gb-title">Livestock & Animal Husbandry</h1>
+            </div>
+          </div>
+          <div class="gb-content">
+            <p>
+              Feed your farm animals to produce valuable cooking ingredients and trade commodities:
+            </p>
+
+            <div class="gb-grid-2">
+              <div class="gb-feature-card">
+                <h3>Hen House (Chickens)</h3>
+                <p>Feed chickens Wheat to harvest fresh eggs. Eggs are essential ingredients for bakery cakes, pastries, and pancake recipes.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Wooly Sheep Pen</h3>
+                <p>Care for sheep to produce soft wool for island quests, deliveries, and expansion supplies.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Dairy Cows</h3>
+                <p>Cows produce rich milk when properly fed. Milk powers gourmet recipes, cheese production, and high-tier deli items.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Honey Apiary</h3>
+                <p>Place beehives near blooming flowers to gather pure honey for sweet bakery recipes and stamina boosts.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8. MINING & LAND EXPANSIONS -->
+        <section id="sec-gathering-expansion" class="doc-section">
+          <div class="gb-breadcrumb">Whitepaper &gt; Mining, Gathering & Land Expansions</div>
+          <div class="gb-top-row">
+            <div class="gb-title-group">
+              
+              <h1 class="gb-title">Mining, Gathering & Land Expansions</h1>
+            </div>
+          </div>
+          <div class="gb-content">
+            <p>
+              Players start on a compact starter island. Crafting axes and pickaxes unlocks materials and opportunities to expand into new areas:
+            </p>
+
+            <div class="gb-grid-2">
+              <div class="gb-feature-card">
+                <h3>Forest Trees (Wood)</h3>
+                <p>Chop trees with an Axe (recovers every 2 hours). Wood is required to construct bridges to new island expansions.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Mineral Quarries</h3>
+                <p>Mine mineral clusters with a Pickaxe. Yields stone, iron, and gold crystal minerals for machine automation.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>New Land Plots</h3>
+                <p>Every bridge built unlocks 3-5 new soil plots, additional trees, and water springs, drastically increasing your daily token yield.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Coastal Piers</h3>
+                <p>Build fishing docks to catch rare marine species and complete gameplay objectives.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9. FUTURE ECONOMY DESIGN -->
+        <section id="sec-deflation-sinks" class="doc-section">
+          <div class="gb-breadcrumb">Whitepaper &gt; Future Economy Design</div>
+          <div class="gb-top-row">
+            <div class="gb-title-group">
+              
+              <h1 class="gb-title">Future Economy Design</h1>
+            </div>
+          </div>
+          <div class="gb-content">
+            <div class="gb-callout-green">
+              <div class="gb-callout-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+              <div class="gb-callout-text">
+                <strong>Economy-first approach:</strong><br />
+                Gameplay stability takes priority over speculative economy features. No public token, contract, burn mechanism, staking vault, or external reward system is currently active.
+              </div>
+            </div>
+
+            <div class="gb-grid-2">
+              <div class="gb-feature-card">
+                <h3>Progression Value</h3>
+                <p>Production, crafting, upgrades, and seasonal objectives are designed around clear gameplay value rather than external financial incentives.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Resource Balance</h3>
+                <p>Future resource sinks must preserve fair progression, avoid forced spending, and be useful within the game itself.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>No Staking Program</h3>
+                <p>There is no active staking, lock-up, yield, vault, or bonus program. No returns or financial benefits are promised.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Future Review</h3>
+                <p>If an external economy is approved, network, contract, access, and security details will be published separately after implementation and independent review.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10. SECURITY & FAIR PLAY -->
+        <section id="sec-security-audits" class="doc-section">
+          <div class="gb-breadcrumb">Whitepaper &gt; Security, Fair Play & Token Governance</div>
+          <div class="gb-top-row">
+            <div class="gb-title-group">
+              
+              <h1 class="gb-title">Security, Fair Play & Governance</h1>
+            </div>
+          </div>
+          <div class="gb-content">
+            <p>
+              Playra values economic fairness above all else. Automated bots and malicious scripts are prevented through cryptographic session verification and proof-of-gameplay state machines:
+            </p>
+
+            <div class="gb-grid-2">
+              <div class="gb-feature-card">
+                <h3>Proof of Gameplay</h3>
+                <p>Every harvest and transaction is verified against server-side crop growth clocks to prevent automated speed hacks.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>No Current Smart Contract Dependency</h3>
+                <p>Routine gameplay does not require a wallet or smart contract. Any future on-chain integration would be disclosed independently and would not be part of current gameplay.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Multi-Sig Treasury</h3>
+                <p>Community and development funds are secured in multi-signature Gnosis Safe vaults requiring multiple executive approvals.</p>
+              </div>
+              <div class="gb-feature-card">
+                <h3>Rate-Limited APIs</h3>
+                <p>DDoS protection and signed nonce handshakes protect all backend endpoints from unauthorized extraction.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 11. FAQ -->
+        <section id="sec-faq" class="doc-section">
+          <div class="gb-breadcrumb">Whitepaper &gt; Frequently Asked Questions</div>
+          <div class="gb-top-row">
+            <div class="gb-title-group">
+              
+              <h1 class="gb-title">Frequently Asked Questions</h1>
+            </div>
+          </div>
+          <div class="gb-content">
+            <div class="gb-feature-card" style="margin-bottom: 16px;">
+              <h3>Has the PYRA token been launched?</h3>
+              <p>No. PYRA remains a future consideration without a confirmed launch date, contract address, network, allocation, or trading venue.</p>
+            </div>
+
+            <div class="gb-feature-card" style="margin-bottom: 16px;">
+              <h3>Can players earn tokens by playing today?</h3>
+              <p>No. There is currently no token earning, withdrawal, staking, reward pool, or external asset redemption program.</p>
+            </div>
+
+            <div class="gb-feature-card" style="margin-bottom: 16px;">
+              <h3>Is a crypto wallet required to start playing?</h3>
+              <p>No. Players can use supported account services and play in the browser without a wallet. Any future wallet feature will be optional unless stated otherwise.</p>
+            </div>
+
+            <div class="gb-feature-card" style="margin-bottom: 16px;">
+              <h3>Which blockchain network will PYRA use?</h3>
+              <p>No network has been confirmed. Only announcements made through Playra's verified official channels should be considered authoritative.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- CTA BANNER -->
+        <div class="gb-cta-card">
+          <h3>Ready to Build Your Farm?</h3>
+          <p>Join the Playra waitlist, explore the farming gameplay roadmap, and receive updates when new stages become available.</p>
+          <a href="/waitlist/" class="gb-btn-play" style="font-size: 14.5px; padding: 10px 24px;">
+            JOIN THE PIONEER WAITLIST
+          </a>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Right Rail (On This Page TOC + Theme Toggle) -->
+    <aside class="gb-right-rail">
+      <div class="gb-right-top">
+        <div class="gb-toc-title">ON THIS PAGE</div>
+        <div id="dynamic-toc">
+          <a class="gb-toc-link active" data-target="vision">Executive Summary</a>
+          <a class="gb-toc-link" data-target="tokenomics">Future Economy Consideration</a>
+          <a class="gb-toc-link" data-target="season-pool">Seasonal Gameplay</a>
+          <a class="gb-toc-link" data-target="farming-loop">Core Farming Loop</a>
+          <a class="gb-toc-link" data-target="crop-tiers">Crop Schedules Table</a>
+          <a class="gb-toc-link" data-target="kitchen-bakery">Kitchen & Processing</a>
+          <a class="gb-toc-link" data-target="animals">Livestock</a>
+          <a class="gb-toc-link" data-target="gathering-expansion">Mining & Expansions</a>
+          <a class="gb-toc-link" data-target="deflation-sinks">Future Economy Design</a>
+          <a class="gb-toc-link" data-target="security-audits">Security & Governance</a>
+          <a class="gb-toc-link" data-target="faq">FAQ</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Search Modal -->
+  <div class="gb-modal-overlay" id="search-modal">
+    <div class="gb-search-modal">
+      <div class="gb-search-input-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="gb-search-input" id="search-modal-input" placeholder="Search whitepaper sections..." />
+        <button id="search-close-btn" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="gb-search-results" id="search-results">
+        <div class="gb-search-result-item" data-target="vision">
+          <div class="gb-search-res-title">Executive Summary</div>
+          <div class="gb-search-res-desc">Economy-first vision and gameplay progression</div>
+        </div>
+        <div class="gb-search-result-item" data-target="tokenomics">
+          <div class="gb-search-res-title">Future Economy Consideration</div>
+          <div class="gb-search-res-desc">No active token, launch plan, network, or contract</div>
+        </div>
+        <div class="gb-search-result-item" data-target="season-pool">
+          <div class="gb-search-res-title">Seasonal Gameplay</div>
+          <div class="gb-search-res-desc">Objectives, season progress, and gameplay rewards</div>
+        </div>
+        <div class="gb-search-result-item" data-target="farming-loop">
+          <div class="gb-search-res-title">Core Farming Loop</div>
+          <div class="gb-search-res-desc">Planting seeds, water care, harvesting, and empire reinvestment</div>
+        </div>
+        <div class="gb-search-result-item" data-target="crop-tiers">
+          <div class="gb-search-res-title">Crop Schedules & Economy Table</div>
+          <div class="gb-search-res-desc">Crop growth schedules and gameplay roles</div>
+        </div>
+        <div class="gb-search-result-item" data-target="kitchen-bakery">
+          <div class="gb-search-res-title">Kitchen & Processing</div>
+          <div class="gb-search-res-desc">Cooking meals to improve gameplay progression and Farmer XP</div>
+        </div>
+        <div class="gb-search-result-item" data-target="animals">
+          <div class="gb-search-res-title">Livestock & Husbandry</div>
+          <div class="gb-search-res-desc">Hen house, sheep pen, dairy cows, and honey apiary</div>
+        </div>
+        <div class="gb-search-result-item" data-target="gathering-expansion">
+          <div class="gb-search-res-title">Mining, Gathering & Land Expansions</div>
+          <div class="gb-search-res-desc">Cutting trees, mining mineral clusters, and bridge building</div>
+        </div>
+        <div class="gb-search-result-item" data-target="deflation-sinks">
+          <div class="gb-search-res-title">Future Economy Design</div>
+          <div class="gb-search-res-desc">Stable progression and no active staking or burn mechanism</div>
+        </div>
+        <div class="gb-search-result-item" data-target="security-audits">
+          <div class="gb-search-res-title">Security, Fair Play & Governance</div>
+          <div class="gb-search-res-desc">Proof of gameplay state machine, open source code, and multi-sig vaults</div>
+        </div>
+        <div class="gb-search-result-item" data-target="faq">
+          <div class="gb-search-res-title">Frequently Asked Questions</div>
+          <div class="gb-search-res-desc">Token status, wallet requirements, and current launch scope</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logic Script -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const sections = document.querySelectorAll(".doc-section");
+      const navItems = document.querySelectorAll(".gb-nav-item");
+      const tocLinks = document.querySelectorAll(".gb-toc-link");
+      const sidebar = document.getElementById("sidebar");
+      const mobileToggle = document.getElementById("mobile-toggle");
+      const searchTrigger = document.getElementById("search-trigger");
+      const searchModal = document.getElementById("search-modal");
+      const searchClose = document.getElementById("search-close-btn");
+      const modalInput = document.getElementById("search-modal-input");
+      const copyBtn = document.getElementById("copy-btn");
+      const copyText = document.getElementById("copy-text");
+
+      function showSection(targetId) {
+        sections.forEach(sec => sec.classList.remove("active"));
+        const target = document.getElementById("sec-" + targetId);
+        if (target) {
+          target.classList.add("active");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        navItems.forEach(item => {
+          if (item.dataset.target === targetId) {
+            item.classList.add("active");
+          } else {
+            item.classList.remove("active");
+          }
+        });
+
+        tocLinks.forEach(item => {
+          if (item.dataset.target === targetId) {
+            item.classList.add("active");
+          } else {
+            item.classList.remove("active");
+          }
+        });
+
+        window.location.hash = targetId;
+
+        if (sidebar) sidebar.classList.remove("open");
+      }
+
+      navItems.forEach(item => {
+        item.addEventListener("click", () => {
+          showSection(item.dataset.target);
+        });
+      });
+
+      tocLinks.forEach(item => {
+        item.addEventListener("click", () => {
+          showSection(item.dataset.target);
+        });
+      });
+
+      document.querySelectorAll(".gb-search-result-item").forEach(item => {
+        item.addEventListener("click", () => {
+          showSection(item.dataset.target);
+          searchModal.classList.remove("open");
+        });
+      });
+
+      const initialHash = window.location.hash.replace("#", "");
+      if (initialHash && document.getElementById("sec-" + initialHash)) {
+        showSection(initialHash);
+      }
+
+      if (copyBtn) {
+        copyBtn.addEventListener("click", () => {
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            copyText.textContent = "Copied!";
+            setTimeout(() => {
+              copyText.textContent = "Copy link";
+            }, 2000);
+          });
+        });
+      }
+
+      function openSearch() {
+        searchModal.classList.add("open");
+        modalInput.value = "";
+        modalInput.focus();
+      }
+      function closeSearch() {
+        searchModal.classList.remove("open");
+      }
+
+      if (searchTrigger) searchTrigger.addEventListener("click", openSearch);
+      if (searchClose) searchClose.addEventListener("click", closeSearch);
+      if (searchModal) {
+        searchModal.addEventListener("click", (e) => {
+          if (e.target === searchModal) closeSearch();
+        });
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+          e.preventDefault();
+          if (searchModal.classList.contains("open")) {
+            closeSearch();
+          } else {
+            openSearch();
+          }
+        }
+        if (e.key === "Escape" && searchModal.classList.contains("open")) {
+          closeSearch();
+        }
+      });
+
+      if (modalInput) {
+        modalInput.addEventListener("input", function () {
+          const query = this.value.toLowerCase();
+          document.querySelectorAll(".gb-search-result-item").forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if (text.includes(query)) {
+              item.style.display = "flex";
+            } else {
+              item.style.display = "none";
+            }
+          });
+        });
+      }
+
+      if (mobileToggle) {
+        mobileToggle.addEventListener("click", () => {
+          sidebar.classList.toggle("open");
+        });
+      }
+
+      const btnLight = document.getElementById("btn-theme-light");
+      const btnDark = document.getElementById("btn-theme-dark");
+
+      if (btnLight && btnDark) {
+        btnLight.addEventListener("click", () => {
+          document.documentElement.classList.remove("dark");
+          document.documentElement.classList.add("light");
+          btnLight.classList.add("active");
+          btnDark.classList.remove("active");
+        });
+        btnDark.addEventListener("click", () => {
+          document.documentElement.classList.remove("light");
+          document.documentElement.classList.add("dark");
+          btnDark.classList.add("active");
+          btnLight.classList.remove("active");
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>

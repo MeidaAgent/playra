@@ -1,0 +1,176 @@
+<!doctype html>
+<!--
+  ======================================================================
+  Playra — Game Section (Entry Point /play/)
+  ----------------------------------------------------------------------
+  This HTML wrapper mounts the React game application (#root) and
+  executes /src/main.tsx.
+  
+  - Game Logic / UI: /src/
+  - Game Assets:     /public/
+  - Portal Website:  /website/ (or root /)
+  ======================================================================
+-->
+<!--
+  translate="no" / notranslate: the game ships its own translations, so browser
+  page translation adds nothing. It also rewrites React-owned text nodes into
+  <font> wrappers, which makes React's commit phase throw
+  "Failed to execute 'insertBefore' on 'Node'". `lang` is kept in sync with the
+  selected language in lib/i18n so the browser stops offering to translate.
+-->
+<html lang="en" class="h-full w-full notranslate" translate="no">
+  <head>
+    <base href="/" />
+    <meta charset="UTF-8" />
+    <meta name="google" content="notranslate" />
+    <link rel="icon" type="image/png" href="/tab_icon.png?v=6" />
+    <link rel="shortcut icon" href="/favicon.ico?v=6" />
+    <link rel="apple-touch-icon" href="/tab_icon.png?v=6" />
+
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover"
+    />
+    <meta name="description" content="Playra - Web3 Game" />
+    <title>Playra</title>
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Playra" />
+    <meta property="og:description" content="Playra - Web3 Game" />
+    <meta property="og:image" content="/assets/plank_logo.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Playra" />
+    <meta name="twitter:description" content="Playra - Web3 Game" />
+    <meta name="twitter:image" content="/assets/plank_logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Paytone+One&family=Russo+One&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- PWA -->
+    <link
+      rel="shortcut icon"
+      href="/favicon.ico"
+      type="image/x-icon"
+    />
+    <link rel="apple-touch-icon" href="/pwa/icons/apple-touch-icon.png" />
+    <link
+      rel="apple-touch-icon"
+      sizes="57x57"
+      href="/pwa/icons/apple-touch-icon-57x57.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="72x72"
+      href="/pwa/icons/apple-touch-icon-72x72.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="76x76"
+      href="/pwa/icons/apple-touch-icon-76x76.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="114x114"
+      href="/pwa/icons/apple-touch-icon-114x114.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="120x120"
+      href="/pwa/icons/apple-touch-icon-120x120.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="144x144"
+      href="/pwa/icons/apple-touch-icon-144x144.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="152x152"
+      href="/pwa/icons/apple-touch-icon-152x152.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/pwa/icons/apple-touch-icon-180x180.png"
+    />
+    <meta name="theme-color" content="#303443" />
+
+    <!-- iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Playra" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/pwa/splash/apple-splash-2048-2732.jpg"
+    />
+    <meta name="apple-touch-fullscreen" content="yes" />
+    <script>
+      window.global = window;
+      (function() {
+        function reportError(type, message, stack, filename, lineno, colno) {
+          console.error('[BROWSER CLIENT ERROR]', type, message, stack);
+          try {
+            fetch('/api/log-client-error', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ type: type, message: message, stack: stack, filename: filename, lineno: lineno, colno: colno, href: window.location.href })
+            }).catch(function() {});
+          } catch(e) {}
+
+          var box = document.getElementById('debug-error-banner');
+          if (!box) {
+            box = document.createElement('div');
+            box.id = 'debug-error-banner';
+            box.style.cssText = 'position:fixed;top:60px;left:12px;right:12px;max-height:80vh;background:#7f1d1d;color:#fff;padding:20px;z-index:999999999;border:3px solid #ef4444;border-radius:10px;font-family:monospace;font-size:13px;overflow:auto;box-shadow:0 12px 30px rgba(0,0,0,0.8);line-height:1.5;';
+            (document.body || document.documentElement).appendChild(box);
+          }
+          box.innerHTML = '<h2 style="margin:0 0 10px;color:#fca5a5;font-size:18px;">GAME ERROR DETECTED: ' + type + '</h2>' +
+            '<div style="background:#991b1b;padding:10px;border-radius:6px;margin-bottom:10px;font-weight:bold;color:#fff;">' + (message || 'Unknown error') + '</div>' +
+            (filename ? '<div style="font-size:11px;opacity:0.9;margin-bottom:10px;">Source: ' + filename + ':' + (lineno || '') + ':' + (colno || '') + '</div>' : '') +
+            '<pre style="background:#450a0a;padding:12px;border-radius:6px;overflow:auto;font-size:11px;white-space:pre-wrap;">' + (stack || 'No stack trace available') + '</pre>' +
+            '<button onclick="location.reload()" style="margin-top:12px;padding:8px 16px;background:#ef4444;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">Refresh Game</button>';
+        }
+
+        window.addEventListener('error', function(e) {
+          reportError('Global Error', e.message, e.error ? e.error.stack : '', e.filename, e.lineno, e.colno);
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+          var r = e.reason;
+          var msg = r ? (r.message || String(r)) : 'Unknown rejection';
+          var stack = r && r.stack ? r.stack : '';
+          reportError('Unhandled Promise Rejection', msg, stack, '', '', '');
+        });
+      })();
+    </script>
+    <script type="module">
+      // Vite/Web3 issue
+      import process from "process";
+      import { Buffer } from "buffer";
+      import EventEmitter from "events";
+      window.Buffer = Buffer;
+      window.process = process;
+      window.EventEmitter = EventEmitter;
+    </script>
+  </head>
+  <body class="h-full w-full">
+    <div id="root" class="h-full w-full"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script
+      src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+      async
+      defer
+    ></script>
+  </body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Privacy Policy | Playra</title>
+    <meta
+      name="description"
+      content="Official Playra Privacy Policy covering account, gameplay, technical, and waitlist data."
+    />
+        <link rel="icon" type="image/png" href="/tab_icon.png?v=6" />
+    <link rel="shortcut icon" href="/favicon.ico?v=6" />
+    <link rel="apple-touch-icon" href="/tab_icon.png?v=6" />
+
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Custom Dark Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+      }
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: #334155 #0f172a;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-body: #111418;
+        --bg-header: rgba(17, 20, 24, 0.95);
+        --bg-card: #181c22;
+        --bg-active: #202632;
+        --border-color: #212732;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --text-muted: #64748b;
+        --accent-blue: #3b82f6;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--bg-body);
+        color: var(--text-primary);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 15px;
+        line-height: 1.72;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Header */
+      .nav-header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        height: 64px;
+        background: var(--bg-header);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+      }
+
+      .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: var(--text-primary);
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .nav-logo {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .nav-link {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: color 0.15s ease;
+      }
+
+      .nav-link:hover {
+        color: var(--text-primary);
+      }
+
+      .btn-play {
+        background: #2563eb;
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 13.5px;
+        font-weight: 600;
+        padding: 6px 16px;
+        border-radius: 6px;
+        transition: background 0.15s ease;
+      }
+
+      .btn-play:hover {
+        background: #1d4ed8;
+      }
+      @media (max-width: 860px) {
+        html, body { overflow-x: hidden; }
+        .top-nav { height: 58px; }
+        .nav-links { gap: 10px; }
+        .nav-link:nth-child(n+3) { display: none; }
+        .btn-play { white-space: nowrap; padding: 6px 10px; }
+      }
+
+      /* Container */
+      .policy-container {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 48px 24px 100px;
+      }
+
+      .policy-breadcrumb {
+        font-size: 13px;
+        color: var(--accent-blue);
+        margin-bottom: 12px;
+        font-weight: 500;
+      }
+
+      h1 {
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+      }
+
+      .last-updated {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 32px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 16px;
+      }
+
+      h2 {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 36px 0 14px 0;
+        color: var(--text-primary);
+      }
+
+      h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 24px 0 10px 0;
+        color: #e2e8f0;
+      }
+
+      p {
+        color: var(--text-secondary);
+        margin-bottom: 18px;
+        font-size: 15px;
+      }
+
+      ul, ol {
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+        padding-left: 24px;
+      }
+
+      li {
+        margin-bottom: 8px;
+      }
+
+      .policy-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px 24px;
+        margin: 24px 0;
+      }
+
+      .policy-card p {
+        margin: 0;
+      }
+
+      a {
+        color: var(--accent-blue);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="nav-header">
+      <a href="/" class="nav-brand">
+        <img src="/assets/token.png" alt="Playra Logo" class="nav-logo" />
+        <span>Playra</span>
+      </a>
+      <nav class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/whitepaper/" class="nav-link">Whitepaper</a>
+        <a href="/docs/" class="nav-link">Docs</a>
+        <a href="/terms-of-service/" class="nav-link">Terms</a>
+        <a href="/waitlist/" class="btn-play">Join Waitlist</a>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="policy-container">
+      <div class="policy-breadcrumb">Support > Privacy Policy</div>
+      <h1>Privacy Policy</h1>
+      <div class="last-updated">Last Updated: October 2026 • Playra Ecosystem</div>
+
+      <div class="policy-card">
+        <p>
+          Playra (<strong>"we"</strong>, <strong>"us"</strong>, or <strong>"our"</strong>) understands that protecting personal information is important. This Privacy Policy explains the information we collect and use when providing the Playra website and game (<strong>"Services"</strong>).
+        </p>
+      </div>
+
+      <h2>1. The Information We Collect</h2>
+      <p>
+        <strong>Personal Information</strong> is information or an opinion about an identified individual, or an individual who is reasonably identifiable. The types of personal information we may collect include:
+      </p>
+      <ul>
+        <li><strong>Account & Player Data:</strong> Supported wallet or account identifier when supplied, X handle, email, and in-game username.</li>
+        <li><strong>Interaction Data:</strong> Farm progress, items crafted, completed activities, preferences, and gameplay or marketplace activity where those systems are enabled.</li>
+        <li><strong>Technical Information:</strong> Device type, browser session metadata, anonymized IP address, operating system, and non-identifying telemetry for bot prevention via Cloudflare Turnstile.</li>
+        <li><strong>Community Communications:</strong> Support requests, bug reports, and survey feedback submitted through official channels.</li>
+      </ul>
+
+      <h2>2. How We Collect Personal Information</h2>
+      <p>We collect personal information in several ways, including:</p>
+      <ul>
+        <li>Directly from you when you connect an account, join a waitlist, create a profile, or play the game;</li>
+        <li>Automatically as you navigate the website, through non-invasive cookies and telemetry;</li>
+        <li>Public information associated with a blockchain account only where a player-facing blockchain feature is enabled;</li>
+        <li>Third-party verification tools used solely for anti-sybil and DDoS mitigation.</li>
+      </ul>
+
+      <h2>3. Purpose of Collection, Use, and Disclosure</h2>
+      <p>We collect and use personal information for purposes including:</p>
+      <ul>
+        <li>To provide, maintain, and improve the Playra platform;</li>
+        <li>To verify supported account connections and protect the integrity of gameplay systems;</li>
+        <li>To detect and prevent bots, cheating, multi-accounting, and fraudulent exploit attempts;</li>
+        <li>To communicate seasonal updates, chapter quest drops, and leaderboard rewards;</li>
+        <li>To comply with legal, regulatory, and tax obligations where required by law.</li>
+      </ul>
+
+      <h2>4. Future Blockchain Features</h2>
+      <p>
+        Playra does not currently require blockchain transactions for normal gameplay. If a blockchain feature is introduced in the future, additional and specific disclosures will identify the network, asset type, transaction behavior, and publicly visible information before participation.
+      </p>
+
+      <h2>5. Security of Information</h2>
+      <p>
+        We are committed to ensuring that the information we hold is secure. We implement industry-standard organizational and technological safeguards to prevent unauthorized access, modification, or disclosure. We will never ask for your private keys, seed phrases, or wallet passwords.
+      </p>
+
+      <h2>6. Your Rights and Choices</h2>
+      <p>
+        Depending on your jurisdiction, you may have rights under applicable privacy laws, including the right to access, rectify, or request deletion of off-chain personal data held by us. To submit a request, contact us via our official community support desk.
+      </p>
+
+      <h2>7. Contact Us</h2>
+      <p>If you have any questions about this Privacy Policy, please reach out to us:</p>
+      <ul>
+        <li><strong>Official Inquiries:</strong> <a href="https://x.com/PlayraFarm" target="_blank">Playra on X</a></li>
+        <li><strong>Website:</strong> <a href="https://www.playra.io">https://www.playra.io</a></li>
+      </ul>
+    </main>
+  </body>
+</html>

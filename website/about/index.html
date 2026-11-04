@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content="0; url=/docs/" />
+    <script>window.location.replace("/docs/");</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>About Playra — Token-Based Web3 Farming Game</title>
+    <meta
+      name="description"
+      content="Learn about Playra, the decentralized farming simulation game powered by Robinhood blockchain and the $PYRA utility token."
+    />
+        <link rel="icon" type="image/png" href="/tab_icon.png?v=6" />
+    <link rel="shortcut icon" href="/favicon.ico?v=6" />
+    <link rel="apple-touch-icon" href="/tab_icon.png?v=6" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* Custom Dark Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+      }
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: #334155 #0f172a;
+      }
+
+      @font-face {
+        font-family: 'm5x7';
+        src: url('/website/css/m5x7.ttf') format('truetype');
+        font-display: swap;
+      }
+
+      :root {
+        --bg-main: #0f172a;
+        --bg-card: #1e293b;
+        --border-color: #334155;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --accent-green: #22c55e;
+        --accent-yellow: #eab308;
+        --accent-yellow-hover: #facc15;
+        --pixel-font: 'm5x7', monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .navbar {
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.85rem 2rem;
+      }
+
+      .nav-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: var(--pixel-font);
+        font-size: 1.85rem;
+        font-weight: bold;
+        color: var(--accent-yellow);
+        text-decoration: none;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+      }
+
+      .nav-link {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: color 0.15s;
+      }
+
+      .nav-link:hover {
+        color: var(--text-primary);
+      }
+
+      .btn-play {
+        background: var(--accent-yellow);
+        color: #0f172a;
+        font-family: var(--pixel-font);
+        font-size: 1.35rem;
+        font-weight: bold;
+        padding: 0.35rem 1.25rem;
+        border-radius: 6px;
+        text-decoration: none;
+        box-shadow: 0 4px 0 #ca8a04;
+        transition: all 0.1s;
+      }
+
+      .btn-play:hover {
+        background: var(--accent-yellow-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 5px 0 #ca8a04;
+      }
+
+      .hero {
+        text-align: center;
+        padding: 4.5rem 1.5rem 3rem;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--pixel-font);
+        font-size: 1.25rem;
+        background: #166534;
+        color: #86efac;
+        padding: 0.2rem 0.8rem;
+        border-radius: 4px;
+        border: 1px solid #22c55e;
+        margin-bottom: 1rem;
+      }
+
+      .hero-title {
+        font-family: var(--pixel-font);
+        font-size: 3.5rem;
+        line-height: 1.1;
+        margin-bottom: 1rem;
+        color: #fde047;
+      }
+
+      .hero-p {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 1.5rem 4rem;
+        flex: 1;
+      }
+
+      .section-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 2.25rem;
+        margin-bottom: 2rem;
+      }
+
+      .section-title {
+        font-family: var(--pixel-font);
+        font-size: 2rem;
+        color: var(--accent-yellow);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .feature-box {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1.25rem;
+      }
+
+      .feature-title {
+        font-family: var(--pixel-font);
+        font-size: 1.35rem;
+        color: #fde047;
+        margin-bottom: 0.4rem;
+      }
+
+      .feature-desc {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+
+      .footer {
+        background: #090d16;
+        border-top: 1px solid var(--border-color);
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+      }
+
+      .footer a {
+        color: var(--accent-yellow);
+        text-decoration: none;
+      }
+
+      @media (max-width: 600px) {
+        .hero-title {
+          font-size: 2.5rem;
+        }
+        .navbar {
+          padding: 0.75rem 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="navbar">
+      <a href="/" class="nav-logo" style="display: flex; align-items: center; gap: 8px;">
+        <img src="/assets/token.png" alt="Playra" style="width: 36px; height: 36px; object-fit: contain;" />
+        <span>PLAYRA</span>
+      </a>
+      <div class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/whitepaper/" class="nav-link">Whitepaper</a>
+        <a href="/docs/" class="nav-link">Docs</a>
+        <a href="/waitlist/" class="btn-play">Join Waitlist</a>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="hero">
+        <div class="hero-badge">ABOUT THE PROJECT</div>
+        <h1 class="hero-title">The Token-Powered Web3 Farming Game</h1>
+        <p class="hero-p">
+          Playra is an open-source, decentralized farming simulation game where players plant crops, harvest bounties, raise livestock, and participate in a fair, token-driven agricultural economy.
+        </p>
+      </div>
+
+      <div class="section-card">
+        <h2 class="section-title">Our Mission</h2>
+        <p style="color: var(--text-secondary); font-size: 1.05rem;">
+          Playra was created to build a fun, transparent, and sustainable gaming ecosystem where players truly control their time and digital assets. Unlike speculative crypto games filled with pay-to-win mechanics and expensive speculative gates, Playra is free to start for everyone, powered purely by the $PYRA utility token.
+        </p>
+
+        <div class="grid-2">
+          <div class="feature-box">
+            <h3 class="feature-title">Pure Token Economy</h3>
+            <p class="feature-desc">All gameplay rewards, trading, and progression revolve around the $PYRA utility token with zero speculative paywalls.</p>
+          </div>
+          <div class="feature-box">
+            <h3 class="feature-title">Verified On-Chain</h3>
+            <p class="feature-desc">All core smart contracts are deployed with publicly verifiable bytecode and transparent on-chain mechanics.</p>
+          </div>
+          <div class="feature-box">
+            <h3 class="feature-title">Built on Robinhood</h3>
+            <p class="feature-desc">Leverages Robinhood's high-speed blockchain infrastructure for seamless, instant micro-transactions.</p>
+          </div>
+          <div class="feature-box">
+            <h3 class="feature-title">Pioneer Community</h3>
+            <p class="feature-desc">A passionate growing community of early adopters and farmers preparing for the official launch.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card" style="text-align: center;">
+        <h2 class="section-title" style="justify-content: center;">Connect With Us</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+          Follow our official channel on X for gameplay announcements, patch releases, and community updates.
+        </p>
+        <a
+          href="https://x.com/PlayraFarm"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="display: inline-flex; align-items: center; gap: 0.5rem; background: #000; color: #fff; padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 600; text-decoration: none; border: 1px solid #475569;"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          Follow on X
+        </a>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>&copy; 2026 Playra. All rights reserved. Built with love by the community.</p>
+    </footer>
+  </body>
+</html>
