@@ -753,11 +753,14 @@ export const WaitlistApp: React.FC = () => {
 
                   {/* Form Error Alert */}
                   {formError && (
-                    <div className="p-1.5 bg-red-100 border-2 border-red-400 rounded-lg text-red-800 text-xs font-semibold leading-tight shadow-sm flex items-start gap-1">
+                    <div
+                      role="alert"
+                      className="flex w-full min-w-0 items-start gap-1.5 rounded-lg border-2 border-red-400 bg-red-100 p-2 text-xs font-semibold leading-normal text-red-800 shadow-sm"
+                    >
                       <svg className="w-3.5 h-3.5 text-red-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span>{formError}</span>
+                      <span className="min-w-0 flex-1 break-words">{formError}</span>
                     </div>
                   )}
 
