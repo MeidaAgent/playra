@@ -56,12 +56,14 @@ const BetaNotice: React.FC = () => {
   return (
     <div
       role="status"
-      className="fixed left-1/2 top-[max(12px,env(safe-area-inset-top))] z-[9999] -translate-x-1/2 whitespace-nowrap rounded-md border border-amber-900/70 bg-amber-400 px-3 py-1.5 text-center text-[10px] font-bold text-amber-950 shadow-lg sm:text-xs"
+      className="fixed left-1/2 top-[max(12px,env(safe-area-inset-top))] z-[9999] flex max-w-[calc(100vw-24px)] -translate-x-1/2 flex-wrap items-center justify-center gap-x-2 gap-y-0.5 rounded-md border border-amber-900/70 bg-amber-300/95 px-2.5 py-1 text-center text-[9px] font-bold leading-normal text-amber-950 shadow-md sm:text-[10px]"
       style={{ pointerEvents: "none", fontFamily: "Poppins, sans-serif" }}
     >
-      PLAYRA BETA
-      <span className="mx-2 opacity-60">|</span>
-      Features and token balances may change.
+      <span className="whitespace-nowrap">PLAYRA BETA</span>
+      <span className="hidden opacity-60 sm:inline" aria-hidden="true">
+        |
+      </span>
+      <span className="min-w-0">Features and token balances may change.</span>
     </div>
   );
 };
