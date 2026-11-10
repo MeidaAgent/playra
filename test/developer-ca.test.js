@@ -11,6 +11,7 @@ import {
 import adminConfigHandler from "../api/admin/config.js";
 import developerHandler from "../api/developer.js";
 import caHandler from "../api/ca.js";
+import { CA_ADDRESS } from "../lib/ca-config.js";
 import loginHandler from "../api/admin/login.js";
 import logoutHandler from "../api/admin/logout.js";
 
@@ -115,15 +116,14 @@ test("logoutHandler clears session cookie", async () => {
   assert.ok(resLogout.headers["set-cookie"]?.includes("Max-Age=0"));
 });
 
-test("caHandler returns current CA address", async () => {
+test("caHandler returns the CA from lib/ca-config.js", async () => {
   const res = createMockResponse();
   await caHandler({ method: "GET", headers: {} }, res);
   assert.equal(res.statusCode, 200);
-  assert.ok(typeof res.body.caAddress === "string");
-  assert.ok(res.body.caAddress.length > 0);
+  assert.equal(res.body.caAddress, CA_ADDRESS);
 });
 
-test("adminConfigHandler requires auth and allows updating CA", async () => {
+test("adminConfigHandler requires auth, shows the CA and rejects updates", async () => {
   // Unauthenticated GET
   const resUnauth = createMockResponse();
   await adminConfigHandler({ method: "GET", headers: {} }, resUnauth);
@@ -137,10 +137,9 @@ test("adminConfigHandler requires auth and allows updating CA", async () => {
     resAuthGet,
   );
   assert.equal(resAuthGet.statusCode, 200);
-  const initialCa = resAuthGet.body.caAddress;
+  assert.equal(resAuthGet.body.caAddress, CA_ADDRESS);
 
-  // Authenticated PUT
-  const newCa = "0x1234567890abcdef1234567890abcdef12345678";
+  // Authenticated PUT is disabled: the CA is set manually in code
   const resAuthPut = createMockResponse();
   await adminConfigHandler(
     {
@@ -150,33 +149,14 @@ test("adminConfigHandler requires auth and allows updating CA", async () => {
         origin: "http://localhost:3000",
         host: "localhost:3000",
       },
-      body: { caAddress: newCa },
+      body: { caAddress: "0x1234567890abcdef1234567890abcdef12345678" },
     },
     resAuthPut,
   );
-  assert.equal(resAuthPut.statusCode, 200);
-  assert.equal(resAuthPut.body.ok, true);
+  assert.equal(resAuthPut.statusCode, 409);
 
-  // Verify updated via public caHandler
+  // Public CA is unchanged
   const resPublic = createMockResponse();
   await caHandler({ method: "GET", headers: {} }, resPublic);
-  assert.equal(resPublic.statusCode, 200);
-  assert.equal(resPublic.body.caAddress, newCa);
-
-  // Restore initial CA
-  const resRestore = createMockResponse();
-  await adminConfigHandler(
-    {
-      method: "PUT",
-      headers: {
-        cookie: cookieHeader,
-        origin: "http://localhost:3000",
-        host: "localhost:3000",
-      },
-      body: { caAddress: initialCa },
-    },
-    resRestore,
-  );
-  assert.equal(resRestore.statusCode, 200);
+  assert.equal(resPublic.body.caAddress, CA_ADDRESS);
 });
-

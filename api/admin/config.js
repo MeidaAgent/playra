@@ -1,10 +1,12 @@
-import { readCaAddress, writeCaAddress } from "../../lib/blob-store.js";
+import { CA_ADDRESS } from "../../lib/ca-config.js";
 import {
   getAuthConfigurationError,
   hasSameOrigin,
   isAuthenticated,
 } from "../../lib/auth.js";
 
+// The CA is now set manually in lib/ca-config.js and shipped with a deploy.
+// The panel can still show it, but saving from the panel is disabled.
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
 
@@ -18,33 +20,16 @@ export default async function handler(req, res) {
   if (req.method === "PUT" && !hasSameOrigin(req)) {
     return res.status(403).json({ error: "Permintaan tidak diizinkan." });
   }
-
   if (getAuthConfigurationError()) {
     return res.status(503).json({ error: "Login admin belum dikonfigurasi." });
   }
 
   if (req.method === "GET") {
-    try {
-      const caAddress = await readCaAddress();
-      return res.status(200).json({ caAddress });
-    } catch (error) {
-      console.error("Could not load admin CA configuration:", error);
-      return res.status(503).json({ error: "Konfigurasi CA tidak dapat dimuat." });
-    }
+    return res.status(200).json({ caAddress: CA_ADDRESS });
   }
 
-  const caAddress = req.body?.caAddress;
-  if (typeof caAddress !== "string" || caAddress.length > 256) {
-    return res.status(400).json({ error: "Alamat CA tidak valid." });
-  }
-
-  try {
-    const finalCa = caAddress.trim() || "-";
-    await writeCaAddress(finalCa);
-    return res.status(200).json({ ok: true });
-  } catch (error) {
-    console.error("Could not save admin CA configuration:", error);
-    return res.status(503).json({ error: "CA gagal disimpan." });
-  }
+  return res.status(409).json({
+    error:
+      "CA sekarang diatur manual lewat kode (lib/ca-config.js), tidak bisa diubah dari panel.",
+  });
 }
-
