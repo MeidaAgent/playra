@@ -20,6 +20,13 @@ async function request(path, options = {}) {
 }
 
 async function loadCaAddress() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryCa = urlParams.get("caAddress");
+  if (queryCa && addressInput) {
+    addressInput.value = queryCa;
+    return;
+  }
+
   try {
     const result = await request("/api/admin/config");
     if (addressInput) {
