@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <!--
   ======================================================================
    Playra â€” WEBSITE SECTION (PRE-GAME PORTAL)
@@ -510,6 +510,7 @@
       .landing-nav { padding-top: max(12px, env(safe-area-inset-top)); }
     }
   </style>
+  <script src="/ca.js" defer></script>
 </head>
 
 <body class="antialiased bg-body text-body font-body">
@@ -560,24 +561,11 @@
             style="font-family: Poppins, sans-serif; text-shadow: none"
             aria-label="PYRA contract address">
             <span>Contract address:</span>
-            <code class="break-all text-white">0x0d32e7e23e90e7504e1ae48acb215778571db377</code>
+            <code class="break-all text-white">-</code>
             <button class="font-semibold text-[#ffe09a] underline underline-offset-2 hover:text-white"
-              data-pyra-contract-copy data-contract-address="0x0d32e7e23e90e7504e1ae48acb215778571db377" type="button">Copy</button>
+              data-pyra-contract-copy data-contract-address="" type="button" hidden>Copy</button>
             <span data-pyra-contract-status aria-live="polite"></span>
           </div>
-          <script>
-            document.querySelectorAll("[data-pyra-contract-copy]").forEach((button) => {
-              button.addEventListener("click", async () => {
-                try {
-                  await navigator.clipboard.writeText(button.dataset.contractAddress);
-                  button.textContent = "Copied!";
-                } catch (error) {
-                  console.error("Unable to copy the PYRA contract address.", error);
-                  button.textContent = "Copy failed";
-                }
-              });
-            });
-          </script>
 
           <p class="text-white mt-2" style="font-family: m5x7; font-size: 24px; line-height: 1.1">
             Be among the first pioneers to build your farm and earn early rewards.
@@ -675,12 +663,6 @@
             <a class="inline-block mt-3 border-b border-coolGray-600 t-pixel-sm text-[#3a4466]" href="/roadmap">
               View roadmap
             </a>
-          </div>
-        </div>
-
-        <div class="logo-grid pb-16 md:pb-20" style="display:flex; justify-content:center;">
-          <div class="logo-tile">
-            <img src="/assets/robinhood-logo.png" alt="Robinhood â€” Playra runs on Robinhood" />
           </div>
         </div>
       </div>

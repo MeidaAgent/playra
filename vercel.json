@@ -4,6 +4,8 @@
     { "source": "/about/", "destination": "/docs/", "permanent": true }
   ],
   "rewrites": [
+    { "source": "/developer", "destination": "/api/developer" },
+    { "source": "/developer/", "destination": "/api/developer" },
     { "source": "/docs", "destination": "/website/docs/index.html" },
     { "source": "/docs/", "destination": "/website/docs/index.html" },
     { "source": "/whitepaper", "destination": "/website/whitepaper/index.html" },

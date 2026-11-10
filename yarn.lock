@@ -12178,7 +12178,7 @@ jake@^10.8.5:
 
 "javascript-astar@github:mikewesthad/javascript-astar":
   version "0.4.2"
-  resolved "git+ssh://git@github.com/mikewesthad/javascript-astar.git#c0304b12861eda334e27f2f15d701c10b296593f"
+  resolved "git+https://github.com/mikewesthad/javascript-astar.git#c0304b12861eda334e27f2f15d701c10b296593f"
 
 jayson@^4.1.1:
   version "4.2.0"

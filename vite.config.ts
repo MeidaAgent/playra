@@ -14,9 +14,92 @@ const getPortFromCLI = () => {
   return 3000; // Default port
 };
 
+const enhanceResponse = (res: any) => {
+  if (!res.status) {
+    res.status = function (code: number) {
+      this.statusCode = code;
+      return this;
+    };
+  }
+  if (!res.json) {
+    res.json = function (data: any) {
+      this.setHeader("Content-Type", "application/json; charset=utf-8");
+      this.end(JSON.stringify(data));
+      return this;
+    };
+  }
+  if (!res.send) {
+    res.send = function (data: any) {
+      if (typeof data === "object" && !Buffer.isBuffer(data)) {
+        return this.json(data);
+      }
+      this.end(data);
+      return this;
+    };
+  }
+};
+
+const parseBody = async (req: any) => {
+  if (req.body !== undefined) return req.body;
+  return new Promise((resolve) => {
+    let body = "";
+    req.on("data", (chunk: any) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      if (!body) {
+        req.body = {};
+        return resolve({});
+      }
+      const contentType = req.headers["content-type"] || "";
+      if (contentType.includes("application/json")) {
+        try {
+          req.body = JSON.parse(body);
+        } catch {
+          req.body = body;
+        }
+      } else {
+        req.body = body;
+      }
+      resolve(req.body);
+    });
+  });
+};
+
+const developerApiMiddleware = async (req: any, res: any, next: any) => {
+  const url = req.url ? req.url.split("?")[0] : "";
+  const apiRoutes: Record<string, () => Promise<any>> = {
+    "/developer": () => import("./api/developer.js"),
+    "/developer/": () => import("./api/developer.js"),
+    "/api/developer": () => import("./api/developer.js"),
+    "/api/ca": () => import("./api/ca.js"),
+    "/api/admin/login": () => import("./api/admin/login.js"),
+    "/api/admin/config": () => import("./api/admin/config.js"),
+    "/api/admin/logout": () => import("./api/admin/logout.js"),
+  };
+
+  if (apiRoutes[url]) {
+    enhanceResponse(res);
+    await parseBody(req);
+    try {
+      const mod = await apiRoutes[url]();
+      return await mod.default(req, res);
+    } catch (error) {
+      console.error(`API Error on ${url}:`, error);
+      res.statusCode = 500;
+      return res.json({ error: "Internal Server Error" });
+    }
+  }
+  next();
+};
+
 const websiteRoutingPlugin = () => ({
   name: "website-routing-plugin",
+  configurePreviewServer(server: any) {
+    server.middlewares.use(developerApiMiddleware);
+  },
   configureServer(server: any) {
+    server.middlewares.use(developerApiMiddleware);
     server.middlewares.use((req: any, res: any, next: any) => {
       if (req.url === "/api/log-client-error" && req.method === "POST") {
         let body = "";
